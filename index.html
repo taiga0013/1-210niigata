@@ -1,0 +1,1598 @@
+<meta charset="utf-8">
+<title>210万分の1</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: 雪の白に、赤い一点(あなた)。1カラムで上から読む。広い画面では「場面と操作」|「地図と記録」の2カラム */
+:root{
+  --bg:#F2F5F6; --surface:#FFFFFF; --sunk:#E6ECEE; --fg:#1A2327; --muted:#56656C; --line:#D0D9DD;
+  --accent:#B3263E; --accent-soft:#F7E2E6; --on-accent:#FFFFFF;
+  --sea:#1C6A71; --sea-soft:#DCEDEE;
+  --assume:#7E5D12; --assume-soft:#F4EAD3;
+  --dot:#A3B0B6;
+  --f-head:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho","YuMincho",serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic","YuGothic",system-ui,sans-serif;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#10161A; --surface:#172025; --sunk:#0C1114; --fg:#E3E9EB; --muted:#94A3AA; --line:#2A373D;
+    --accent:#EE6A80; --accent-soft:#3B1D25; --on-accent:#1A0B0F;
+    --sea:#62B6BD; --sea-soft:#14302F;
+    --assume:#DDB663; --assume-soft:#33291A;
+    --dot:#7A8D96; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10161A; --surface:#172025; --sunk:#0C1114; --fg:#E3E9EB; --muted:#94A3AA; --line:#2A373D;
+  --accent:#EE6A80; --accent-soft:#3B1D25; --on-accent:#1A0B0F;
+  --sea:#62B6BD; --sea-soft:#14302F;
+  --assume:#DDB663; --assume-soft:#33291A;
+  --dot:#7A8D96; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.75;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px;
+  overflow-x:hidden;-webkit-text-size-adjust:100%}
+h1,h2,h3{font-family:var(--f-head);font-weight:700;text-wrap:balance;margin:0;line-height:1.35}
+p{margin:0}
+a{color:var(--sea)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1120px;margin:0 auto}
+.num{font-variant-numeric:tabular-nums}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-block:14px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand b{font-family:var(--f-head);font-weight:800;font-size:22px;letter-spacing:.02em}
+.brand b em{font-style:normal;color:var(--accent)}
+.brand small{color:var(--muted);font-size:12px}
+.topnav{display:flex;gap:8px}
+.ghost{background:none;border:1px solid var(--line);border-radius:999px;padding:5px 14px;cursor:pointer;font-size:13px}
+.ghost:hover{border-color:var(--fg)}
+
+/* generic */
+.screen{padding-top:28px}
+.eyebrow{font-size:12px;letter-spacing:.14em;color:var(--muted)}
+.label{font-size:12px;letter-spacing:.12em;color:var(--muted);font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.label span{letter-spacing:0;font-weight:400}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:999px;padding:11px 26px;border:1px solid var(--fg);background:transparent;cursor:pointer;font-weight:700}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn:hover{background:var(--sunk)}
+.btn.primary:hover{background:var(--accent)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.tiny{font-size:12px}
+
+/* start */
+.hero{max-width:760px;padding-block:12px 26px}
+.hero h1{font-size:clamp(30px,6.4vw,54px);font-weight:800;letter-spacing:.01em;margin-top:10px}
+.hero h1 .one{color:var(--accent)}
+.hero .lead{margin-top:16px;max-width:36em;color:var(--muted)}
+.setup{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:820px){.setup{grid-template-columns:minmax(0,1fr)}}
+fieldset{border:0;margin:0 0 22px;padding:0;min-width:0}
+legend{font-family:var(--f-head);font-weight:700;font-size:17px;margin-bottom:10px;padding:0}
+.choice{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);cursor:pointer;margin-bottom:8px}
+.choice:has(input:checked){border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.choice input{margin-top:6px;accent-color:var(--accent)}
+.choice b{display:block}
+.choice span{display:block;color:var(--muted);font-size:13px;line-height:1.6}
+.seg{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;width:max-content;max-width:100%;background:var(--surface)}
+.seg label{padding:8px 16px;cursor:pointer;font-size:14px;border-right:1px solid var(--line)}
+.seg label:last-child{border-right:0}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label:has(input:checked){background:var(--fg);color:var(--bg)}
+.seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:-2px}
+select{font:inherit;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);max-width:100%}
+.mapfig{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.mapfig canvas{width:100%;height:auto;display:block;aspect-ratio:1/1.02}
+.mapfig figcaption{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:18px;margin-top:30px}
+.note{border-top:2px solid var(--fg);padding-top:12px;font-size:13px;line-height:1.75}
+.note h3{font-size:15px;margin-bottom:6px}
+.note ul{margin:0;padding-left:1.2em}
+.tel{font-variant-numeric:tabular-nums;user-select:all;font-weight:700}
+
+/* stat memo */
+.stats{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.stat{font-size:12.5px;line-height:1.6;padding:7px 10px;border-radius:6px;display:flex;gap:8px;align-items:flex-start}
+.stat i{font-style:normal;font-size:11px;font-weight:700;border-radius:4px;padding:1px 6px;white-space:nowrap;flex:none;margin-top:1px}
+.stat.real{background:var(--sea-soft)}
+.stat.real i{background:var(--sea);color:var(--bg)}
+.stat.assume{background:var(--assume-soft)}
+.stat.assume i{background:var(--assume);color:var(--bg)}
+
+/* profile */
+.profile{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:820px){.profile{grid-template-columns:minmax(0,1fr)}}
+.pname{font-size:clamp(28px,5vw,42px);font-weight:800}
+.pname small{font-family:var(--f-body);font-size:14px;font-weight:400;color:var(--muted);margin-left:8px}
+dl.facts{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 18px;margin:18px 0 0}
+dl.facts dt{color:var(--muted);font-size:13px;padding-top:2px}
+dl.facts dd{margin:0}
+dl.facts dd small{color:var(--muted)}
+@media (max-width:560px){dl.facts{grid-template-columns:minmax(0,1fr);gap:2px}dl.facts dt{padding-top:10px}.money{grid-template-columns:minmax(0,1fr)}}
+
+/* play */
+.playhead{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;padding-block:4px 14px;border-bottom:1px solid var(--line)}
+.playhead .who{font-family:var(--f-head);font-size:22px;font-weight:800}
+.playhead .meta{color:var(--muted);font-size:13px}
+.playhead .status{font-size:13px;background:var(--sunk);border-radius:999px;padding:2px 10px}
+.playhead .yr{margin-left:auto;font-size:13px;color:var(--muted)}
+.playgrid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:26px;margin-top:18px;align-items:start}
+@media (max-width:900px){.playgrid{grid-template-columns:minmax(0,1fr)}}
+.col{display:flex;flex-direction:column;gap:22px;min-width:0}
+.panel{min-width:0}
+.scene{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 20px 18px;position:relative}
+.scene.stop{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.scene .age{font-family:var(--f-head);font-weight:800;font-size:58px;line-height:1;color:var(--accent);display:flex;align-items:baseline;gap:6px}
+.scene .age small{font-size:18px;color:var(--fg)}
+.scene .stopflag{position:absolute;top:16px;right:16px;font-size:11px;letter-spacing:.1em;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:2px 10px}
+.scene h2{font-size:21px;margin-top:10px}
+.scene .body{margin-top:8px}
+.scene .evs{margin:12px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.scene .evs li{padding-left:16px;position:relative}
+.scene .evs li::before{content:"";position:absolute;left:2px;top:.75em;width:6px;height:6px;border-radius:50%;background:var(--dot)}
+.scene .evs li.hot::before{background:var(--accent)}
+.opts{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.opt{text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:11px 14px;cursor:pointer;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.opt:hover{border-color:var(--fg)}
+.opt.auto{border-color:var(--accent)}
+.opt small{color:var(--muted);font-size:12px;white-space:nowrap}
+.opt small.hard{color:var(--accent)}
+.autobar{height:2px;background:var(--accent);margin-top:10px;width:0;transition:width 1.4s linear}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:3px 11px;font-size:13px;background:var(--surface)}
+.chip.gone{color:var(--muted);text-decoration:line-through}
+.focus{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,140px),1fr));gap:6px}
+.focus button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;text-align:left;cursor:pointer;line-height:1.4}
+.focus button b{display:block;font-size:14px}
+.focus button span{font-size:11.5px;color:var(--muted)}
+.focus button[aria-pressed="true"]{border-color:var(--sea);background:var(--sea-soft)}
+.money{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.mbox{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.mbox dl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;margin:6px 0 0;font-size:12.5px;color:var(--muted)}
+.mbox dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.money b{font-family:var(--f-head);font-size:24px;font-weight:700;display:block;line-height:1.3}
+.money b.neg{color:var(--accent)}
+.env{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.stars{font-size:18px;letter-spacing:2px;color:var(--accent);white-space:nowrap}
+.stars i{font-style:normal;color:var(--line)}
+.envlist{list-style:none;margin:6px 0 0;padding:0;font-size:12.5px;color:var(--muted)}
+.envlist li{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dotted var(--line);padding:2px 0}
+.envlist b{font-weight:500;font-variant-numeric:tabular-nums;color:var(--fg)}
+.meters{display:flex;flex-direction:column;gap:9px}
+.meter{display:grid;grid-template-columns:5.5em minmax(0,1fr) 2.6em;gap:10px;align-items:center;font-size:14px}
+.meter .bar{height:8px;background:var(--sunk);border-radius:99px;overflow:hidden}
+.meter .bar i{display:block;height:100%;background:var(--sea);border-radius:99px;transition:width .4s}
+.meter.low .bar i{background:var(--accent)}
+.meter .v{text-align:right;font-variant-numeric:tabular-nums}
+.speed{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.speed button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 11px;cursor:pointer;font-variant-numeric:tabular-nums}
+.speed button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.speed label{display:flex;align-items:center;gap:6px;font-size:14px;margin-left:auto;cursor:pointer}
+.speed input{accent-color:var(--accent);width:18px;height:18px}
+.prog{height:3px;background:var(--sunk);border-radius:9px;margin-top:10px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--fg);width:0}
+svg{display:block;width:100%;height:auto}
+.others{display:flex;flex-direction:column;gap:8px}
+.other{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.other:last-child{border-bottom:0}
+.other b{font-weight:700}
+.other .st{font-size:12.5px;color:var(--muted);grid-column:1/-1}
+.other.dead b{color:var(--muted)}
+.log{max-height:380px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;font-size:13.5px;padding-right:4px}
+.log div{display:grid;grid-template-columns:3.2em minmax(0,1fr);gap:8px}
+.log div em{font-style:normal;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
+.log div.hot span{color:var(--accent)}
+
+/* end */
+.endhead{max-width:820px}
+.endhead h1{font-size:clamp(28px,5.6vw,46px);font-weight:800;margin-top:8px}
+.endhead h1 em{font-style:normal;color:var(--accent)}
+.endgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;margin-top:26px;align-items:start}
+@media (max-width:900px){.endgrid{grid-template-columns:minmax(0,1fr)}}
+.words{display:flex;flex-wrap:wrap;gap:8px}
+.words button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 18px;cursor:pointer;font-family:var(--f-head);font-weight:700}
+.words button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.turns{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.turns li{display:grid;grid-template-columns:3.4em minmax(0,1fr);gap:8px;font-size:14px}
+.turns li em{font-style:normal;color:var(--accent);font-variant-numeric:tabular-nums;font-weight:700;text-align:right}
+.achs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr));gap:8px}
+.ach{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--surface);font-size:12.5px;line-height:1.5}
+.ach b{display:block;font-family:var(--f-head);font-size:15px}
+.ach.off{opacity:.45}
+.ach.on{border-color:var(--accent)}
+.copybox{width:100%;min-height:110px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);font:inherit;font-size:13px;padding:10px}
+.section-title{font-size:19px;margin-bottom:10px}
+table.rec{border-collapse:collapse;width:100%;font-size:13.5px}
+table.rec th,table.rec td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+table.rec th{color:var(--muted);font-weight:500;font-size:12px}
+.tablewrap{overflow-x:auto}
+.zukan{display:flex;flex-wrap:wrap;gap:5px}
+.zukan span{font-size:12px;border-radius:5px;padding:2px 8px;background:var(--sunk);color:var(--muted)}
+.zukan span.on{background:var(--accent-soft);color:var(--fg)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><b>210万分の<em>1</em></b><small><a href="https://1in8b.life/ja/" target="_blank" rel="noopener">『80億分の1』</a>へのオマージュ(参考: <a href="https://born-in-japan.com/data/ichiokunisen/" target="_blank" rel="noopener">『1.2億分の1』</a>)</small></div>
+    <nav class="topnav"><button class="ghost" id="nav-start" type="button">はじめから</button><button class="ghost" id="nav-rec" type="button">記録</button></nav>
+  </header>
+
+  <!-- START -->
+  <section class="screen" id="s-start">
+    <div class="hero">
+      <p class="eyebrow">新潟県 ・ 2027年に生まれる</p>
+      <h1>あなたは、だれとして<br>生まれるでしょう。</h1>
+      <p class="lead">新潟県で2027年に生まれるひとりの一生を、0歳から最期まで1年ずつ進めます。どこで、どんな家に生まれるかは選べません。起こることの多くは、統計の頻度にそって決まります。</p>
+    </div>
+    <div class="setup">
+      <div>
+        <fieldset>
+          <legend>生まれ場所の決め方</legend>
+          <label class="choice"><input type="radio" name="mode" id="mode-a" value="A" checked><div><b>A いま生まれる赤ちゃん</b><span>市町村ごとの1年間の出生数(令和5年)の比で抽選します。性別は県の出生の男女比で決まります。</span></div></label>
+          <label class="choice"><input type="radio" name="mode" id="mode-b" value="B"><div><b>B いま生きている約207万人</b><span>市町村(新潟市は区)ごとの人口の比で抽選します。人の多い場所ほど当たりやすくなります。</span></div></label>
+        </fieldset>
+        <fieldset>
+          <legend>人生の長さ</legend>
+          <div class="seg" role="radiogroup" aria-label="人生の長さ">
+            <label><input type="radio" name="len" id="len-10" value="600">約10分</label>
+            <label><input type="radio" name="len" id="len-30" value="1800" checked>約30分</label>
+            <label><input type="radio" name="len" id="len-60" value="3600">約60分</label>
+          </div>
+          <p class="tiny muted" style="margin-top:6px">あとから速度を上げることもできます。分かれ道では時間が止まります。</p>
+        </fieldset>
+        <fieldset>
+          <legend><label for="sel-muni">出生地</label></legend>
+          <select id="sel-muni"><option value="">おまかせ(抽選)</option></select>
+        </fieldset>
+        <button class="btn primary" id="btn-born" type="button">生まれる</button>
+        <div class="stats" id="start-stats"></div>
+      </div>
+      <figure class="mapfig"><canvas id="map-start" width="600" height="612" aria-label="新潟県の点の図"></canvas><figcaption id="map-start-cap"></figcaption></figure>
+    </div>
+    <div class="notes">
+      <div class="note">
+        <h3>はじめる前に</h3>
+        <ul>
+          <li>15歳以上の方に向けた内容です。</li>
+          <li>死・病気・災害・介護・孤立が、統計の頻度で起こります。</li>
+          <li>数字は公的統計と仮定を組み合わせた試算です。だれかの将来を予測するものではありません。</li>
+          <li>2026年より先のことは、すべて想定です。</li>
+        </ul>
+      </div>
+      <div class="note">
+        <h3>つらいときの相談先</h3>
+        <ul class="small">
+          <li>よりそいホットライン <span class="tel">0120-279-338</span>(24時間)</li>
+          <li>#いのちSOS <span class="tel">0120-061-338</span>(24時間)</li>
+          <li>いのちの電話 <span class="tel">0120-783-556</span>(毎日16〜21時、毎月10日は8時〜翌8時)</li>
+          <li>チャイルドライン <span class="tel">0120-99-7777</span>(18歳まで、毎日16〜21時)</li>
+          <li>こころの健康相談統一ダイヤル <span class="tel">0570-064-556</span></li>
+        </ul>
+        <p class="tiny muted" style="margin-top:6px">厚生労働省「まもろうよ こころ」掲載の情報(2026年11月11日確認)。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROFILE -->
+  <section class="screen" id="s-profile" hidden>
+    <div class="profile">
+      <div id="profile-body"></div>
+      <figure class="mapfig"><canvas id="map-profile" width="600" height="612" aria-label="生まれた場所"></canvas><figcaption id="map-profile-cap"></figcaption></figure>
+    </div>
+    <div class="row" style="margin-top:24px">
+      <button class="btn primary" id="btn-begin" type="button">この人生をはじめる</button>
+      <button class="btn" id="btn-reroll" type="button">もう一度抽選</button>
+      <button class="btn" id="btn-back" type="button">設定にもどる</button>
+    </div>
+  </section>
+
+  <!-- PLAY -->
+  <section class="screen" id="s-play" hidden>
+    <div class="playhead" id="ph"></div>
+    <div class="playgrid">
+      <div class="col">
+        <div class="scene" id="scene"></div>
+        <div class="panel"><div class="label">家と家族</div><div id="family"></div></div>
+        <div class="panel"><div class="label">今年の重点<span>いつでも変えられます</span></div><div class="focus" id="focus"></div></div>
+        <div class="money"><div class="panel"><div class="label">総資産<span>万円</span></div><div class="mbox" id="assets"></div></div><div class="panel"><div class="label">年収<span>万円・額面</span></div><div class="mbox" id="income"></div></div></div>
+        <div class="panel"><div class="label">4つのメーター<span>直接は動かせません</span></div><div class="meters" id="meters"></div></div>
+        <div class="panel"><div class="label">速度</div><div class="speed" id="speed"></div><div class="prog"><i id="prog"></i></div></div>
+      </div>
+      <div class="col">
+        <div class="panel"><div class="label">人生地図</div><div id="lifemap"></div></div>
+        <div class="panel"><div class="label">生存曲線<span>平均余命から復元した推定値</span></div><div id="survival"></div></div>
+        <div class="panel"><div class="label">同じ日に生まれたほかの3人</div><div class="others" id="others"></div></div>
+        <div class="panel"><div class="label">人生の記録</div><div class="log" id="log"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- END -->
+  <section class="screen" id="s-end" hidden></section>
+
+  <!-- RECORDS -->
+  <section class="screen" id="s-rec" hidden></section>
+</div>
+
+<script>
+(function(){
+'use strict';
+const HEADLESS = !!globalThis.__EXPOSE__;
+const R = Math.random;
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const ri=(a,b)=>a+Math.floor(R()*(b-a+1));
+const pick=a=>a[Math.floor(R()*a.length)];
+function gauss(){let u=0,v=0;while(!u)u=R();while(!v)v=R();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function wpick(items,wf){let t=0;const ws=items.map(x=>{const w=Math.max(0,wf(x));t+=w;return w});let r=R()*t;for(let i=0;i<items.length;i++){r-=ws[i];if(r<=0)return items[i];}return items[items.length-1];}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=n=>Math.round(n).toLocaleString('ja-JP');
+const BIRTH_YEAR=2027;
+
+/* ============ データ ============ */
+// name,pop2025,births R5,snow,hh,hub,lon,lat,sx,sy
+const MUNI=[
+['新潟市中央区',177404,1034.4,1,1.91,'n',139.04,37.905,.022,.016],
+['新潟市西区',154243,899.3,1,2.24,'n',138.95,37.86,.035,.025],
+['新潟市東区',127698,744.6,1,2.23,'n',139.10,37.915,.022,.016],
+['新潟市秋葉区',71594,417.4,1,2.54,'n',139.10,37.78,.03,.03],
+['新潟市北区',70218,409.4,1,2.47,'n',139.21,37.93,.035,.025],
+['新潟市江南区',66863,389.8,1,2.58,'n',139.13,37.84,.025,.022],
+['新潟市西蒲区',50411,293.9,1,2.7,'n',138.87,37.73,.045,.035],
+['新潟市南区',41187,240.1,1,2.75,'n',139.01,37.76,.03,.025],
+['長岡市',251272,1432,2,2.41,'c',138.85,37.45,.085,.075],
+['上越市',176644,954,2,2.41,'j',138.27,37.12,.1,.075],
+['新発田市',89623,492,1,2.51,'n',139.34,37.94,.06,.05],
+['三条市',88461,415,2,2.59,'c',139.0,37.62,.05,.03],
+['柏崎市',74755,319,2,2.25,'c',138.56,37.36,.065,.05],
+['燕市',73726,427,1,2.51,'c',138.88,37.665,.03,.025],
+['村上市',51480,195,1,2.47,'n',139.49,38.22,.08,.11],
+['南魚沼市',51198,274,3,2.6,'c',138.88,37.07,.045,.075],
+['佐渡市',45404,186,1,2.27,'n',138.40,38.03,.12,.11],
+['十日町市',44541,190,3,2.57,'c',138.75,37.13,.065,.055],
+['五泉市',43518,196,1,2.59,'n',139.19,37.73,.035,.03],
+['阿賀野市',37547,194,1,2.76,'n',139.23,37.83,.035,.03],
+['見附市',36692,219,1,2.61,'c',138.92,37.53,.025,.022],
+['糸魚川市',36531,132,2,2.31,'j',137.86,36.99,.085,.055],
+['小千谷市',31424,145,2,2.59,'c',138.80,37.31,.03,.028],
+['魚沼市',31047,140,3,2.52,'c',139.0,37.23,.06,.06],
+['妙高市',27934,126,3,2.53,'j',138.24,36.92,.045,.04],
+['胎内市',26244,96,1,2.55,'n',139.42,38.05,.035,.035],
+['加茂市',22981,84,1,2.52,'c',139.05,37.66,.022,.018],
+['聖籠町',14076,110,1,2.8,'n',139.26,37.98,.018,.018],
+['田上町',10297,33,1,2.6,'c',139.07,37.70,.016,.013],
+['阿賀町',8329,18,2,2.31,'n',139.46,37.67,.07,.06],
+['津南町',7974,23,3,2.67,'c',138.65,37.01,.035,.035],
+['湯沢町',7508,29,3,1.91,'c',138.81,36.93,.025,.035],
+['弥彦村',7121,17,1,2.73,'c',138.85,37.70,.012,.012],
+['関川村',4315,15,2,2.57,'n',139.57,38.09,.03,.025],
+['刈羽村',4314,16,2,2.32,'c',138.62,37.42,.013,.013],
+['出雲崎町',3601,9,2,2.49,'c',138.71,37.53,.016,.016],
+['粟島浦村',301,1,1,1.85,'n',139.25,38.47,.01,.013]
+].map((a,i)=>({i,name:a[0],pop:a[1],births:a[2],snow:a[3],hh:a[4],hub:a[5],lon:a[6],lat:a[7],sx:a[8],sy:a[9],city:a[0].startsWith('新潟市')?'新潟市':a[0]}));
+const MI=Object.fromEntries(MUNI.map(m=>[m.name,m]));
+const HUB={n:{city:'新潟市',muni:'新潟市中央区'},c:{city:'長岡市',muni:'長岡市'},j:{city:'上越市',muni:'上越市'}};
+const POP_TOTAL=2068476;
+
+function regionOf(m){
+  if(m.name==='佐渡市'||m.name==='粟島浦村')return '離島';
+  if(m.snow===3)return '豪雪地帯';
+  if(['新潟市中央区','新潟市東区','新潟市西区','新潟市北区','新潟市江南区','新潟市秋葉区'].includes(m.name))return '都市部';
+  if(['阿賀町','関川村','出雲崎町'].includes(m.name))return '中山間';
+  if(/[町村]$/.test(m.name))return '町村部';
+  return '地方都市';
+}
+// 災害の地域倍率(ゲーム上の仮定)
+const DMUL={
+  flood:{'三条市':2,'見附市':1.8,'関川村':2,'加茂市':1.6,'村上市':1.5,'阿賀町':1.5,'胎内市':1.4,'長岡市':1.3,'燕市':1.3,'五泉市':1.3,'十日町市':1.2},
+  quake:{'柏崎市':2,'刈羽村':2,'小千谷市':2,'長岡市':1.8,'十日町市':1.6,'魚沼市':1.6,'出雲崎町':1.6,'見附市':1.4,'上越市':1.2},
+  slide:{'阿賀町':1.8,'糸魚川市':1.8,'妙高市':1.8,'津南町':1.6,'湯沢町':1.6,'十日町市':1.5,'魚沼市':1.5,'南魚沼市':1.5,'関川村':1.5,'佐渡市':1.3,'上越市':1.2},
+  fire:{'糸魚川市':1.3}
+};
+function disMul(m,key){
+  if(key==='snow')return [0,0.4,1,2.2][m.snow];
+  if(m.city==='新潟市'&&(key==='flood'||key==='quake'))return 1.3;
+  if(m.city==='新潟市'&&key==='slide')return 0.4;
+  return (DMUL[key]&&DMUL[key][m.name])||1;
+}
+const DIS=[
+  {key:'quake',name:'大きな地震',rate:4/62},
+  {key:'flood',name:'大雨・水害',rate:5/62},
+  {key:'snow',name:'記録的な大雪',rate:3/62},
+  {key:'slide',name:'土砂災害・雪崩',rate:4/62},
+  {key:'fire',name:'大規模な火災',rate:1/62}
+];
+const DIS_EX={
+  quake:['新潟県中越地震(2004年) 死者15人(直接死)、住家全壊71棟が確認されています。','新潟県中越沖地震(2007年) 柏崎市・刈羽村などで大きな被害が出ました(死者68人)。'],
+  flood:['平成23年7月 新潟・福島豪雨(2011年) 県内で死者20人。','2022年8月の大雨 関川村で1時間に149mmの雨を観測。'],
+  snow:['令和2年度の大雪 県内で死者21人、死傷者364人。屋根の雪下ろし中の事故が多くを占めました。'],
+  slide:['妙高の土石流(1978年) 死者13人。','糸魚川市の雪崩(1986年) 死者13人。'],
+  fire:['糸魚川市駅北大火(2016年) 焼損147棟。強い南風で燃え広がりました。']
+};
+
+// 高校: 校名|市|偏差値|種別|flags(p=私立,g=女子校)
+const HS_SRC=`新潟高校|新潟市|72.5|普通|
+新潟南高校|新潟市|67.5|普通・理数|
+高田高校|上越市|65|普通|
+長岡高校|長岡市|64.5|普通|
+三条高校|三条市|63.5|普通|
+新潟明訓高校|新潟市|64|普通|p
+新発田高校|新発田市|61.5|普通|
+新潟中央高校|新潟市|58.5|普通|p
+新潟市立万代高校|新潟市|59|普通|
+新潟江南高校|新潟市|59|普通|
+新津高校|新潟市|58|普通|
+巻高校|新潟市|58|普通|
+新潟第一高校|新潟市|58|普通|p
+柏崎高校|柏崎市|57|普通|
+長岡向陵高校|長岡市|57|普通|
+高田北城高校|上越市|56.5|普通|
+長岡大手高校|長岡市|55|普通|p
+三条東高校|三条市|55|普通|
+新潟清心女子高校|新潟市|55|普通|pg
+東京学館新潟高校|新潟市|54.5|普通|p
+新潟商業高校|新潟市|53|商業|
+開志国際高校|新潟市|52.5|普通|p
+佐渡高校|佐渡市|52|普通|
+六日町高校|南魚沼市|52|普通|
+新発田南高校|新発田市|51|普通|
+新井高校|妙高市|51|普通|
+北越高校|新潟市|50|普通|p
+加茂高校|加茂市|50|普通|
+五泉高校|五泉市|50|普通|
+長岡工業高校|長岡市|50|工業|
+村上高校|村上市|50|普通|
+中越高校|長岡市|49.5|普通|p
+糸魚川高校|糸魚川市|49|普通|
+小千谷高校|小千谷市|49|普通|
+柏崎常盤高校|柏崎市|48|普通|p
+新発田商業高校|新発田市|48|商業|
+高田商業高校|上越市|48|商業|
+十日町高校|十日町市|48|普通|
+長岡農業高校|長岡市|48|農業|
+新潟西高校|新潟市|48|普通|
+上越総合技術高校|上越市|47|工業・商業|
+長岡商業高校|長岡市|47|商業|
+見附高校|見附市|47|普通|
+新潟工業高校|新潟市|46.5|工業|
+高田農業高校|上越市|46|農業|
+新潟東高校|新潟市|46|普通|
+加茂暁星高校|加茂市|45.5|普通|p
+新発田中央高校|新発田市|45|普通|
+柏崎総合高校|柏崎市|45|総合|
+日本文理高校|新潟市|44|普通|p
+三条商業高校|三条市|44|商業|
+新発田農業高校|新発田市|44|農業|
+敬和学園高校|新発田市|43|普通|p
+小出高校|魚沼市|43|普通|
+巻総合高校|新潟市|43|総合|
+村上桜ヶ丘高校|村上市|43|普通|
+帝京長岡高校|長岡市|42.5|普通|p
+新潟青陵高校|新潟市|42.5|普通|p
+関根学園高校|上越市|42.5|普通|p
+糸魚川白嶺高校|糸魚川市|42|普通|
+柏崎工業高校|柏崎市|42|工業|
+十日町総合高校|十日町市|42|総合|
+上越高校|上越市|41|普通|p
+加茂農林高校|加茂市|41|農林|
+佐渡総合高校|佐渡市|41|総合|
+新津工業高校|新潟市|41|工業|
+久比岐高校|上越市|40|普通|
+小千谷西高校|小千谷市|40|普通|
+新津南高校|新潟市|40|普通|
+吉田高校|燕市|39|普通|
+分水高校|燕市|40|普通|`;
+const HS=HS_SRC.trim().split('\n').map(l=>{const [name,city,dev,kind,fl]=l.split('|');return {name,city,dev:+dev,kind,priv:fl.includes('p'),girls:fl.includes('g')};});
+
+const UNI_IN=[
+  {name:'新潟大学',lo:47.5,hi:47.5,muni:'新潟市西区'},
+  {name:'新潟県立大学',lo:47.5,hi:47.5,muni:'新潟市東区'},
+  {name:'長岡技術科学大学',lo:40,hi:40,muni:'長岡市'},
+  {name:'三条市立大学',lo:40,hi:40,muni:'三条市'}
+];
+const UNI_OUT={
+  '東京圏':[['東京大学',67.5,72.5,'東京圏'],['早稲田大学',62.5,70,'東京圏'],['慶應義塾大学',57.5,72.5,'東京圏'],['明治大学',60,67.5,'東京圏'],['横浜国立大学',55,67.5,'横浜'],['千葉大学',45,72.5,'千葉'],['中央大学',52.5,62.5,'東京圏'],['法政大学',52.5,65,'東京圏'],['東京理科大学',42.5,62.5,'東京圏'],['埼玉大学',47.5,60,'さいたま'],['東洋大学',40,60,'東京圏'],['日本大学',35,65,'東京圏'],['亜細亜大学',35,42.5,'東京圏']],
+  '北関東':[['筑波大学',55,65,'つくば'],['宇都宮大学',45,52.5,'宇都宮'],['群馬大学',42.5,62.5,'前橋'],['高崎経済大学',50,55,'高崎'],['茨城大学',40,55,'水戸'],['獨協大学',42.5,55,'草加'],['白鴎大学',37.5,40,'小山'],['常磐大学',35,42.5,'水戸']],
+  '東北':[['東北大学',52.5,67.5,'仙台'],['宮城教育大学',42.5,50,'仙台'],['宮城大学',42.5,47.5,'仙台'],['山形大学',37.5,62.5,'山形'],['福島大学',40,47.5,'福島'],['秋田大学',37.5,62.5,'秋田'],['岩手大学',40,62.5,'盛岡'],['弘前大学',40,62.5,'弘前'],['国際教養大学',65,70,'秋田']],
+  '関西':[['京都大学',60,70,'京都'],['大阪大学',55,70,'大阪'],['神戸大学',52.5,67.5,'神戸'],['大阪公立大学',52.5,67.5,'大阪'],['京都工芸繊維大学',52.5,55,'京都'],['兵庫県立大学',47.5,57.5,'神戸'],['滋賀大学',45,57.5,'彦根'],['和歌山大学',42.5,52.5,'和歌山']]
+};
+// 賃金(所定内給与、千円/月) 高校卒/大学卒
+const WAGE=[[20,225.2,263.9],[25,251.7,296.4],[30,276.2,340.3],[35,296.6,382.2],[40,309.0,425.3],[45,322.2,458.4],[50,335.1,494.9],[55,332.1,529.1],[60,286.7,420.2],[65,250.9,367.5],[70,237.1,351.7]];
+// 死亡率パラメータ
+const MP={m:[0.00028446135948327384,0.00018760925813619505,0.0002541971910548405,9.634279108349742e-06,0.10652248528472376],
+          f:[8.50597772275936e-15,1971.4604648182185,0.0003273410016342444,1.0162372248767698e-06,0.12634273726026682]};
+const MORTK=0.97;
+const E0={m:81.35,f:87.33};
+function hz(a,sex){const p=MP[sex];return Math.min(1,p[0]*Math.exp(-a/p[1])+p[2]+p[3]*Math.exp(p[4]*a));}
+const LX={};
+['m','f'].forEach(s=>{const lx=[100000];for(let a=0;a<120;a++)lx.push(lx[a]*(1-hz(a,s)));LX[s]=lx;});
+function expH(a){return 70-Math.max(0,a-45)*0.35;}
+
+const VALUES={work:'仕事での成功',family:'家族との時間',local:'地域とのつながり',learn:'学び',free:'自由な暮らし',health:'健康',money:'お金の安心',love:'好きなことを続けること'};
+const SURN=['佐藤','渡辺','小林','高橋','鈴木','斎藤','山田','阿部','長谷川','伊藤','五十嵐','近藤','佐々木','山本','池田','本間','石田','丸山','田中','加藤','中村','清水','小池','星野'];
+const GIVEN={m:['蓮','陽翔','湊','蒼','碧','樹','律','大翔','悠真','朝陽','颯真','結翔','陽太','奏太','大和','新'],f:['陽葵','凛','翠','結菜','紬','芽依','澪','葵','結月','杏','心陽','咲良','美桜','花','莉子','詩']};
+
+const STAT={
+  pop:['real','新潟県の人口 2,068,476人(2025年国勢調査 速報)。2020年より6.0%少なく、30市町村すべてで減っています。'],
+  hh:['real','1世帯あたりの人数 2.39人(2025年国勢調査 速報)。'],
+  aged:['real','65歳以上 707,233人、高齢化率34.6%(2025年)。'],
+  births:['real','令和5年の出生数 10,916人(人口動態統計)。第1子44.9%・第2子38.2%・第3子13.2%・第4子以上3.7%。'],
+  births25:['real','令和7年の出生数 9,580人(前年より361人少ない)。'],
+  tfr:['real','合計特殊出生率 1.35(2020年)。'],
+  sexA:['real','出生の男女比 男5,562人/計10,916人(令和5年)。'],
+  migr:['real','20〜24歳の転出超過 2,921人(2025年)。県全体の転出超過4,291人の68.1%を占めます。'],
+  uni:['real','県内の高校卒業者の大学等進学率 56.0%(令和7年3月卒業、学校基本調査)。'],
+  life:['real','令和7年簡易生命表の平均余命 男81.35年・女87.33年(0歳)。'],
+  wage:['real','賃金構造基本統計調査(令和7年速報)の学歴・年齢階級別 所定内給与。年額は月額×(12+2.5)で計算。'],
+  hsdev:['real','高校の偏差値は「みんなの高校情報」(2026年度版)の掲載値。幅のある学校は中間値。民間の入試難度の目安で、公式統計ではありません。'],
+  unidev:['real','大学の偏差値は河合塾(2026年8〜9月発表)の値。県外は学部・方式ごとの最低〜最高で、合否は中間値で計算。私立は確認できた数字のある大学のみ。民間の目安で、公式統計ではありません。'],
+  dis:['real','県の資料で確認できた大きな災害の件数(下限、1964〜2025年の62年): 地震4・水害5・大雪3・土砂/雪崩4・大規模火災1。これを年あたりの頻度にしています。'],
+  aBirthsN:['assume','新潟市の区ごとの出生数は公表値がないため、市の総数4,429人を区の人口比で分けています。'],
+  aSexB:['assume','Bの性別は、市町村ごとの男女比が手元にないため、県全体の値(男 約48.6%)で代用しています。'],
+  aWage:['assume','賃金の男女差(女性×0.82)、企業規模(中小×0.88/大×1.18)、賞与2.5か月分は仮定です。'],
+  aIncome:['assume','世帯年収の位置(全国の上から○%)は抽選。ひとり親(約9%)は位置を下げています。'],
+  aFamily:['assume','親の学歴・住まい・年下のきょうだいの有無は、ゲーム上の割合で抽選しています。'],
+  aDev:['assume','学力の偏差値は平均50・標準偏差8で抽選し、親の学歴(大学卒+2.5/中学卒−2.5)と世帯年収(上位30% +1.5/下位30% −1.5)で補正(30〜75)。'],
+  aPass:['assume','合格しやすさ = 1/(1+exp(−(自分の偏差値−学校の偏差値+1)/3.2))、3〜97%の範囲。自分の偏差値 = 生まれ時の偏差値+(知識−70)×0.35+浪人年数×3。'],
+  aMarry:['assume','結婚・離婚・子どもの数の確率はゲーム上の仮定です。'],
+  aIll:['assume','重い病気の年齢別の確率と、治療の効果は仮定です。'],
+  aDis:['assume','一人が被災する割合0.18と、地域ごとの倍率(水害は三条市2倍、地震は柏崎市・刈羽村2倍など)、規模の割合(小60%・中30%・大10%)は仮定です。'],
+  aMoney:['assume','年金・生活費・住宅費・学費・退職金は仮定です。'],
+  aRegion:['assume','地域区分と、地域ごとの暮らしの文章はゲーム上の仮定です。'],
+  aMort:['assume','健康による死亡率の倍率 exp((期待健康度−健康)/28)(0.5〜3倍)、調整係数0.97。'],
+  aUnemp:['assume','失業は20〜59歳で年2.5%の確率としています。'],
+  aCare:['assume','介護の負担と費用は仮定です。'],
+  aEnv:['assume','生まれた環境の5段階評価は、世帯年収の位置・親の学歴・ひとり親かどうか・住まいの点数を足したゲーム内の目安です。抽選結果のおよそ下位10%が1、上位10%が5になるよう区切っています。人や家庭の価値を決めるものではありません。'],
+  aJob:['assume','親の職種は、世帯年収の位置と親の学歴に合わせた割合で抽選しています。「海外とのつながり」があると、海外への進学や就職の話が来やすくなります。'],
+  aAbroad:['assume','海外の高校・大学・留学・海外就職は、本人の偏差値や知識、親の職種と世帯年収で選択肢が出るゲーム上の決まりです。学校は国ごとの代表的な目安で、難しさ・合格しやすさ・費用・賃金(国内の中小企業の約1.5倍)・生活費(国内の1.35倍)はすべて仮定です。'],
+  aCompany:['assume','就職先の企業名は、新潟県内や全国・海外に実在する企業の名前と所在地を例として使っています。ゲーム内の年収・転勤・失業などは賃金統計と仮定から計算したもので、その企業の実際の給与や出来事とは関係ありません。県外の中小企業は業種だけを示しています。'],
+  aAch:['assume','実績の中身はゲーム上の決まりです。'],
+  aSport:['assume','スポーツ推薦は、運動や部活を重点にした年数・運動部・好きなこと・健康から出す「競技の力」で声がかかる仮定です。推薦先の学校は候補からの抽選で、実際の推薦枠を示すものではありません。高校は合格しやすさ90%、大学は50〜90%としています。'],
+  snowex:['real','令和2年度の大雪では県内で死者21人、死傷者364人。屋根の雪下ろし中の事故が多くを占めました。']
+};
+
+/* ============ 抽選 ============ */
+function drawMuni(mode){return mode==='A'?wpick(MUNI,m=>m.births):wpick(MUNI,m=>m.pop);}
+function drawSex(mode){return R()<(mode==='A'?5562/10916:0.486)?'m':'f';}
+function roundHalf(x){return Math.round(x*2)/2;}
+function newProfile(mode,muniIdx){
+  const muni=muniIdx!=null?MUNI[muniIdx]:drawMuni(mode);
+  const sex=drawSex(mode);
+  const vals=Object.keys(VALUES).sort(()=>R()-.5).slice(0,R()<.5?1:2);
+  const single=R()<0.09;
+  let pct=ri(1,99); if(single)pct=Math.min(99,pct+25);
+  const bo=wpick([1,2,3,4],x=>[44.9,38.2,13.2,3.7][x-1]);
+  const eduW={univ:33,col:30,hs:33,jhs:4};
+  if(pct<=30){eduW.univ*=1.8;eduW.jhs*=.5}
+  if(pct>=70){eduW.univ*=.55;eduW.jhs*=1.6}
+  const pedu=wpick(Object.keys(eduW),k=>eduW[k]);
+  const rural=['中山間','豪雪地帯','離島','町村部'].includes(regionOf(muni));
+  const pj=wpick(PJOBS,j=>{let w=j[1];const t=j[2];
+    if(t==='top')w*=P_TOP(pct); else if(t==='high'||t==='intl')w*=pct<=30?2.2:pct>70?0.4:1; else if(t==='low')w*=pct<=30?0.5:pct>60?1.6:1;
+    if(pedu==='univ'){if(t==='high'||t==='top'||t==='intl')w*=1.8;if(t==='low')w*=0.6;} else if(t==='high'||t==='top'||t==='intl')w*=0.4;
+    if(j[0]==='農業・漁業'&&rural)w*=2.5; return w;});
+  const pjob=pj[0];const intl=pj[2]==='intl'||(pj[0]==='技術者・研究者'&&R()<.3)||(pj[2]==='top'&&R()<.25);
+  const reg=regionOf(muni);
+  const homeW=reg==='都市部'?{own:50,rent:42,three:8}:{own:62,rent:16,three:22};
+  const home=wpick(Object.keys(homeW),k=>homeW[k]);
+  let dev=50+8*gauss();
+  if(pedu==='univ')dev+=2.5; if(pedu==='jhs')dev-=2.5;
+  if(pct<=30)dev+=1.5; if(pct>70)dev-=1.5;
+  dev=roundHalf(clamp(dev,30,75));
+  const mAge=Math.round(clamp(29+2.2*(bo-1)+gauss()*4,19,45));
+  const fAge=Math.round(clamp(mAge+2+gauss()*3,19,60));
+  const younger=bo===1?(R()<.55?(R()<.2?2:1):0):bo===2?(R()<.25?1:0):(R()<.06?1:0);
+  const type=['E','I'][ri(0,1)]+['S','N'][ri(0,1)]+['T','F'][ri(0,1)]+['J','P'][ri(0,1)];
+  return {mode,muni:muni.i,sex,name:pick(SURN)+' '+pick(GIVEN[sex]),vals,single,pct,bo,younger,pedu,home,dev,mAge,fAge,type,pjob,intl};
+}
+// 生まれた環境の5段階評価(ゲーム上の仮定)。世帯年収の位置・親の学歴・ひとり親かどうか・住まいの点数を足し、
+// 抽選結果のおよそ下位10%を1、次の20%を2、真ん中40%を3、次の20%を4、上位10%を5にしている
+function envRate(P){
+  const parts=[['世帯年収(上から'+P.pct+'%)',(50-P.pct)/25],['親の学歴',{univ:.6,col:.2,hs:-.2,jhs:-.8}[P.pedu]],['家族のかたち',P.single?-.6:0],['住まい',{own:.2,three:.2,rent:-.2}[P.home]]];
+  const sc=parts.reduce((a,p)=>a+p[1],0);
+  const lv=sc<=-1.6?1:sc<=-0.75?2:sc<1.0?3:sc<1.95?4:5;
+  return {lv,sc,parts,label:['','かなり厳しい','やや厳しい','ふつう','恵まれている','とても恵まれている'][lv]};
+}
+function starsHTML(lv){return '<span class="stars" aria-label="5段階中'+lv+'">'+'★'.repeat(lv)+'<i>'+'★'.repeat(5-lv)+'</i></span>';}
+const PJOBS=[['会社員(事務・営業)',30,'mid'],['工場・建設などの技能職',18,'low'],['販売・サービスの仕事',12,'low'],['医療・福祉の仕事',10,'mid'],['公務員',8,'mid'],['自営業',7,'mid'],['農業・漁業',4,'low'],['教員',4,'high'],['技術者・研究者',4,'high'],['医師',1.2,'top'],['会社経営者',2,'top'],['海外と取引のある会社員(商社・外資系など)',2,'intl']];
+function P_TOP(pct){return pct<=20?4:pct<=40?1.5:pct>60?0.2:1;}
+const PEDU={univ:'大学・大学院卒',col:'短大・専門学校卒',hs:'高校卒',jhs:'中学卒'};
+const HOME={own:'持ち家(一戸建て)',rent:'賃貸のアパート・マンション',three:'祖父母と同じ家(三世代)'};
+const TYPEJ={E:'外向',I:'内向',S:'感覚',N:'直感',T:'思考',F:'感情',J:'計画',P:'柔軟'};
+
+/* ============ 人生の状態 ============ */
+let G=null;
+function makeLife(P){
+  const muni=MUNI[P.muni];
+  const L={
+    P, name:P.name, sex:P.sex, birth:muni.i, age:0, alive:true,
+    m:{h:70,j:70,k:70,r:70},
+    focus:null, savings:0, loan:0, income:0, wageSum:0, career:0,
+    school:null, ronin:0, roninNow:false, hsName:null, hsTrack:null, edu:'none',
+    job:null, unemp:false, retired:false, reemp:0, localJob:0, workStart:null,
+    loc:{inPref:true,muni:muni.i,label:muni.name}, everOut:false, returned:false,
+    home:P.home==='own'||P.home==='three'?'family':'rent', ownHouse:false,
+    married:false, marriedAt:null, spouseAge:null, spouseAlive:true, kids:[], divorced:false, maybeMarry:false,
+    parents:[], sibOlder:P.bo-1, sibYounger:P.younger,
+    illness:null, illCount:0, extraHaz:0, license:true, careYears:0, carePay:0, cared:false,
+    disasters:0, disBig:0, like:null, club:null,
+    log:[], turns:[], marks:[], locHist:[{age:0,kind:'home'}], roleHist:[{age:0,kind:'child'}],
+    sched:{}, stats:new Set(['pop','life']), maxK:70, maxR:70, cause:null, deathAge:null,
+    yearEv:[], yearStats:[]
+  };
+  if(P.single){ L.parents.push({role:R()<.85?'母':'父',age:P.mAge,alive:true}); L.parents[0].sex=L.parents[0].role==='母'?'f':'m'; }
+  else { L.parents.push({role:'父',sex:'m',age:P.fAge,alive:true}); L.parents.push({role:'母',sex:'f',age:P.mAge,alive:true}); }
+  L.sched={love:ri(24,34),transfer:ri(28,45),house:ri(30,38),care:ri(45,62),snow:ri(70,80)};
+  L.stats.add(P.mode==='A'?'sexA':'aSexB'); L.stats.add('births');
+  if(P.mode==='A'&&muni.city==='新潟市')L.stats.add('aBirthsN');
+  ['aIncome','aFamily','aEnv','aDev','aRegion','aMort'].forEach(s=>L.stats.add(s));
+  L.focus=defaultFocus(L);
+  return L;
+}
+function muniOf(L){return MUNI[L.loc.muni!=null?L.loc.muni:L.birth];}
+function stageOf(L){
+  if(L.age<6)return 'young';
+  if(L.age<15)return 'child';
+  if(L.school||L.roninNow)return 'student';
+  if(L.retired)return 'senior';
+  return 'work';
+}
+function statusOf(L){
+  if(!L.alive)return `${L.deathAge}歳で人生を終えた`;
+  const a=L.age;
+  if(a<3)return '乳幼児'; if(a<6)return '保育園・幼稚園';
+  if(a<12)return `小学${a-5}年生`; if(a<15)return `中学${a-11}年生`;
+  if(L.school){
+    if(L.school.type==='hs')return `${L.school.name} ${Math.min(3,a-14)}年生`;
+    if(L.school.type==='univ')return `${L.school.name}の学生`;
+    return `専門学校生(${L.school.inPref?'県内':'県外'})`;
+  }
+  if(L.roninNow)return `浪人生(${L.ronin}年目)`;
+  if(L.retired){ if(L.reemp>a)return '再雇用で勤務'; if(L.localJob>a)return '地域の仕事'; return '退職後の暮らし'; }
+  if(L.unemp)return '求職中';
+  if(L.job)return L.job.label;
+  return '—';
+}
+function addLog(L,text,cat,hot){L.log.push({age:L.age,text,cat:cat||'',hot:!!hot});L.yearEv.push({text,hot:!!hot});}
+function mark(L,row,label){L.marks.push({age:L.age,row,label});}
+function turn(L,text){L.turns.push({age:L.age,text});}
+function fx(L,d){for(const k in d){if(k in L.m)L.m[k]=clamp(L.m[k]+d[k],0,100);}L.maxK=Math.max(L.maxK,L.m.k);L.maxR=Math.max(L.maxR,L.m.r);}
+function setLoc(L,loc){
+  if(!L.ownHouse&&loc.muni!==L.birth)L.home='rent';
+  const wasOut=!L.loc.inPref;const wasAbroad=!!L.loc.abroad;
+  if(wasAbroad&&!loc.abroad){addLog(L,'海外から日本に戻ってきた。','home');mark(L,0,'帰国');}
+  if(loc.abroad)L.everAbroad=true;
+  L.loc=loc;
+  const kind=loc.abroad?'abroad':!loc.inPref?'out':(loc.muni===L.birth?'home':'pref');
+  if(!loc.inPref)L.everOut=true;
+  if(wasOut&&loc.inPref){L.returned=true;addLog(L,'新潟に戻って暮らしはじめた。','home',true);mark(L,0,'Uターン');}
+  const last=L.locHist[L.locHist.length-1];
+  if(last.age===L.age)last.kind=kind; else if(last.kind!==kind)L.locHist.push({age:L.age,kind});
+}
+function setRole(L,kind){const last=L.roleHist[L.roleHist.length-1];if(last.kind===kind)return;if(last.age===L.age)last.kind=kind;else L.roleHist.push({age:L.age,kind});}
+function hubMuni(L){return MI[HUB[MUNI[L.birth].hub].muni].i;}
+
+/* ============ 今年の重点 ============ */
+const FOCUS={
+  young:[],
+  child:[['study','勉強',{k:4,j:-1},['learn']],['play','友だち・遊び',{r:4,j:2,k:-1},['family','local','free']],['help','家の手伝い',{r:2,k:1,j:1},['family','local']],['sport','運動',{h:4,j:1},['health']],['music','歌・楽器',{j:3,k:1},['love']],['art','絵・工作',{j:3,k:1},['love','free']],['read','読書',{k:3,j:1},['learn','love']]],
+  student:[['study','勉強',{k:4,j:-1},['learn','work']],['club','部活・サークル',{h:2,r:3,k:-1},['health','local']],['friends','友だち',{r:4,j:2,k:-1},['family','free']],['job','アルバイト',{r:1,k:-1,h:-1},['money'],{cash:40}],['body','体を整える',{h:4},['health']],['fav','好きなこと',{j:4},['love','free']]],
+  work:[['work','仕事',{h:-1,r:-1},['work','money'],{career:1}],['learn','学び',{k:4,j:1},['learn']],['family','家族',{r:3,j:3},['family']],['health','健康',{h:4},['health']],['social','人づきあい',{r:4,j:1},['local']],['save','貯える',{j:-1},['money'],{spend:.88}]],
+  senior:[['health','健康',{h:4},['health']],['hobby','趣味・学び',{k:3,j:2},['learn','love']],['family','家族・友人',{r:4,j:2},['family']],['local','地域の活動',{r:3,j:2,h:1},['local']],['work','働き続ける',{h:-1},['work','money'],{side:80}],['save','貯える',{j:-1},['money'],{spend:.9}]]
+};
+const MNAME={h:'健康',j:'幸福',k:'知識',r:'人間関係'};
+function focusList(L){return FOCUS[stageOf(L)];}
+function focusDef(L){return focusList(L).find(f=>f[0]===L.focus)||null;}
+function defaultFocus(L){const list=focusList(L);if(!list.length)return null;return wpick(list,f=>1+3*f[3].filter(v=>L.P.vals.includes(v)).length)[0];}
+function arrows(f){const out=[];for(const k in f[2]){if(f[2][k]>0)out.push(MNAME[k]+'↑');else if(f[2][k]<0)out.push(MNAME[k]+'↓');}
+  const x=f[4]||{}; if(x.cash||x.side||x.career)out.push('収入↑'); if(x.spend)out.push('支出↓'); return out.join(' ');}
+
+/* ============ お金 ============ */
+function wageBase(L){
+  const a=L.age; let row=WAGE[0];
+  for(const w of WAGE)if(a>=w[0])row=w;
+  let hs=row[1],un=row[2];
+  let mon=L.edu==='univ'?un:L.edu==='senmon'?hs+0.35*(un-hs):hs;
+  if(a<20)mon*=0.92;
+  let y=mon*14.5/10;
+  if(L.sex==='f')y*=0.82;
+  if(L.job)y*=L.job.size==='x'?1.35:L.job.size==='l'?1.18:L.job.size==='p'?1.0:0.88;
+  y*=1+Math.min(0.2,L.career*0.012);
+  return y;
+}
+function living(L){
+  const kids=L.kids.filter(k=>k.alive&&L.age-k.born<22).length;
+  let c=165+(L.married&&L.spouseAlive?75:0)+kids*45;
+  if(L.ownHouse)c+=15; else if(L.home==='family')c+=0; else c+=L.married?85:60;
+  if(L.loc.abroad)c*=1.35; else if(!L.loc.inPref)c*=1.15;
+  if(L.age>=65)c*=0.9;
+  const f=focusDef(L); if(f&&f[4]&&f[4].spend)c*=f[4].spend;
+  return c;
+}
+function finance(L){
+  const st=stageOf(L); let inc=0,net=0;
+  const f=focusDef(L)||[];const x=f[4]||{};
+  if(st==='young'||st==='child'){L.income=0;return;}
+  if(st==='student'){
+    if(x.cash)inc+=x.cash;
+    let burden=0;
+    if(L.school&&L.school.type!=='hs'){
+      burden=L.P.pct<=40?10:L.P.pct<=70?50:90;
+      if(!L.school.inPref)burden+=L.P.pct<=40?10:45;
+    }
+    if(L.roninNow)burden+=L.P.pct<=40?10:40;
+    if(L.school&&L.school.abroad)burden+=L.school.schol?20:L.P.pct<=20?60:160;
+    if(L.studyYear===L.age)burden+=L.P.pct<=40?50:150;
+    net=inc-burden;
+  } else if(st==='work'){
+    if(L.job&&!L.unemp){inc=wageBase(L);L.wageSum+=inc;}
+    else if(L.unemp){inc=wageBase(L)*0.4;}
+    if(L.careYears>0&&L.careMode==='self')inc*=0.6;
+    if(L.leaveYear===L.age)inc*=0.6;
+    net=inc*0.78-living(L);
+  } else {
+    if(L.reemp>L.age){const b=wageBase(L)*0.75;inc+=b;L.wageSum+=b;}
+    if(L.localJob>L.age)inc+=60;
+    if(x.side&&L.m.h>35)inc+=x.side;
+    let pen=0; if(L.age>=65)pen=78+0.005481*L.wageSum;
+    net=inc*0.8+pen*0.9-living(L); L.incPension=pen; inc+=pen;
+  }
+  if(L.carePay>0){net-=L.carePay;}
+  if(L.loan>0){const pay=Math.min(L.loan/0.85,L.loanPay||110);net-=pay;L.loan=Math.max(0,L.loan-pay*0.85);if(L.loan<1){L.loan=0;addLog(L,'住宅ローンを払い終えた。','home');}}
+  L.income=inc; if(st!=='senior')L.incPension=0; L.netFlow=net; if(inc>(L.maxIncome||0)){L.maxIncome=inc;L.maxIncomeAge=L.age;}
+  L.savings+=net;
+  if(L.savings>0)L.savings*=1.01;
+}
+const netWorth=L=>L.savings-L.loan;
+
+/* ============ 場面 ============ */
+function scene(o){return Object.assign({kind:'choice',stats:[],opts:[],body:''},o);}
+function opt(label,fn,v,note,w){return {label,fn,v:v||[],note:note||'',w:w==null?1:w};}
+function passP(my,sd){return clamp(1/(1+Math.exp(-(my-sd+1)/3.2)),0.03,0.97);}
+function passLabel(p){return p>=0.8?'合格しやすい':p>=0.5?'合格圏':p>=0.2?'むずかしい':'かなりむずかしい';}
+function myDev(L){return L.P.dev+(L.m.k-70)*0.35+L.ronin*3;}
+
+const MILE={5:'指を折って数えられるようになった年。いま、いちばんうれしいことを思い浮かべてみてください。',
+  15:'進む道を選びはじめる年。いま、いちばん気になっていることは何ですか。',
+  30:'数年前の自分に、ひとことだけ伝えられるとしたら、何を言いますか。',
+  50:'半分を過ぎた気がしますか。これからやってみたいことを、ひとつ思い浮かべてください。',
+  70:'ここまで来た日々の中で、ふと思い出す景色はありますか。'};
+function mileScene(a){return scene({kind:'milestone',title:`${a}歳の節目`,body:MILE[a],opts:[opt('胸にしまって続ける',()=>null)]});}
+
+function likeScene(L){
+  const o=[['外で体を動かすこと',{h:3,j:1},['health'],'sport'],['絵をかくこと、ものをつくること',{j:3,k:1},['love','free'],'art'],['歌や楽器',{j:3,k:1},['love'],'music'],['本や図鑑',{k:3},['learn'],'book'],['虫や生き物、自然',{k:2,j:2},['learn','free'],'nature'],['パズルやゲーム',{k:2,j:1},['love'],'game']];
+  return scene({title:'7歳 好きなことが見えてくる',body:'夢中になれることが、少しずつ見えてきました。いちばん好きなのは何でしょう。',
+    opts:o.map(x=>opt(x[0],L=>{fx(L,x[1]);L.like=x[3];turn(L,`好きなこと: ${x[0]}`);return {text:`${x[0]}が好きになった。`};},x[2]))});
+}
+function clubScene(L){
+  return scene({title:'12歳 中学校の部活',body:'中学校に入りました。放課後をどう過ごしますか。',opts:[
+    opt('運動部に入る',L=>{fx(L,{h:3,r:2});L.club='運動部';turn(L,'部活: 運動部');return {text:'運動部に入った。'};},['health','local']),
+    opt('文化部に入る',L=>{fx(L,{k:2,r:2,j:1});L.club='文化部';turn(L,'部活: 文化部');return {text:'文化部に入った。'};},['learn','love']),
+    opt('部活に入らず、地域のクラブや習いごとに通う',L=>{fx(L,{j:2,k:1});L.club='地域';turn(L,'部活に入らず、地域のクラブへ');return {text:'地域のクラブに通いはじめた。'};},['free','love'])
+  ]});
+}
+function hsCandidates(L){
+  const m=MUNI[L.birth];const own=m.city;const hub=HUB[m.hub].city;
+  let c=HS.filter(s=>s.city===own||s.city===hub);
+  if(L.sex==='m')c=c.filter(s=>!s.girls);
+  c=c.filter(s=>!(L.hsTried||[]).includes(s.name));
+  c.sort((a,b)=>b.dev-a.dev);
+  if(c.length>7){const n=c.length;const idx=[...new Set([0,1,2,3,4,5,6].map(i=>Math.round(i*(n-1)/6)))];c=idx.map(i=>c[i]);}
+  return c.map(s=>({...s,far:s.city!==own}));
+}
+function hsScene(L){
+  const c=hsCandidates(L);const my=myDev(L);const m=MUNI[L.birth];
+  L.stats.add('hsdev');L.stats.add('aPass');
+  const stats=['hsdev','aPass'];
+  const opts=c.map(s=>{const p=passP(my,s.dev);const note=passLabel(p)+(s.far?'・通学に時間がかかる':'');
+    let w=p*(1+(s.dev>=60&&L.P.vals.includes('learn')?1:0))+(s.far?0:0.3);
+    return opt(`${s.name}(偏差値${s.dev})`,L=>enterHS(L,s,p),[],`${s.kind}${s.priv?'・私立':''} / ${note}`,w);});
+  if(abroadOK(L,'hs')){
+    L.stats.add('aAbroad');stats.push('aAbroad');
+    const schol=my>=68&&L.P.pct>40;
+    const p=clamp(passP(my+(L.P.intl?3:0),62),0.2,0.9);
+    COUNTRY.slice(0,4).sort(()=>R()-.5).slice(0,2).forEach(c=>{
+      const sch={name:`${c}の高校(寮のある学校)`,city:c,dev:62,kind:'普通',abroad:true,country:c,schol};
+      opts.push(opt(`海外: ${c}の高校に進む`,L=>enterHS(L,sch,p),['free','learn'],`${schol?'奨学金つき':L.P.pct<=20?'費用は家庭で負担':'費用が大きい'} / ${passLabel(p)}`,0.5+(L.P.intl?0.8:0)));});
+  }
+  if(sportScore(L)>=5){
+    L.stats.add('aSport');stats.push('aSport');
+    let sp=HS.filter(h=>(h.city===m.city||h.city===HUB[m.hub].city)&&h.dev>=42&&h.dev<=62&&!(L.sex==='m'&&h.girls));
+    const pri=sp.filter(h=>h.priv);if(pri.length>=2)sp=pri;
+    sp.sort(()=>R()-.5).slice(0,2).forEach(h=>{const s={...h,far:h.city!==m.city,sport:true};
+      opts.unshift(opt(`スポーツ推薦: ${h.name}(偏差値${h.dev})`,L=>enterHS(L,s,0.9),['health'],`${h.kind}${h.priv?'・私立':''} / 推薦・合格しやすい`,1.2+(L.like==='sport'?1:0)));});
+  }
+  if(!opts.length)opts.push(opt('二次募集のある高校(偏差値40)',L=>enterHS(L,{name:'二次募集の高校',city:m.city,dev:40,kind:'普通',far:false},1),[],'普通 / 合格しやすい'));
+  let body=`いまの自分の偏差値は、おおよそ${my.toFixed(1)}。合格しやすさは、偏差値の差から計算した目安です。受験できるのは1回だけで、不合格なら偏差値に見合う学校に進みます。`;
+  if(m.name==='粟島浦村')body+=' 島には高校がないので、島を出て暮らすことになります。';
+  return scene({title:'15歳 高校を選ぶ',body,stats,opts});
+}
+function enterHS(L,s,p){
+  if(R()>=p){
+    // 受験は1回だけ。不合格なら、自分の偏差値に見合う学校へ進む
+    const m=MUNI[L.birth];const own=m.city;const hub=HUB[m.hub].city;const my=myDev(L);
+    let pool=HS.filter(h=>(h.city===own||h.city===hub)&&h.name!==s.name&&!(L.sex==='m'&&h.girls));
+    const below=pool.filter(h=>h.dev<=my);
+    let t;
+    if(below.length)t=below.sort((a,b)=>(b.dev-a.dev)||((b.city===own)-(a.city===own)))[0];
+    else if(pool.length)t=pool.sort((a,b)=>a.dev-b.dev)[0];
+    else t={name:'二次募集の高校',city:own,dev:40,kind:'普通'};
+    t={...t,far:t.city!==own};
+    turn(L,`${s.name}は不合格`);
+    const r=enterHS(L,t,1);
+    return {text:`${s.name}は不合格だった。偏差値に見合う${t.name}(偏差値${t.dev})に進むことになった。`,hot:true};
+  }
+  L.school={type:'hs',name:s.name,end:18,inPref:true};L.hsName=s.name;
+  if(s.sport){L.sportRec=true;fx(L,{h:3,r:2});turn(L,'スポーツ推薦で進学');}
+  L.hsTrack=(s.kind.startsWith('普通')||s.dev>=60)?'academic':'voc';
+  fx(L,{k:4+Math.max(0,s.dev-45)*0.35,r:4,j:s.dev>=65?0:3});
+  if(s.far)fx(L,{h:-1,j:-1});
+  if(s.abroad){L.school.inPref=false;L.school.abroad=true;L.school.schol=s.schol;L.hsTrack='academic';fx(L,{r:-6,k:4,j:2});setLoc(L,{inPref:false,abroad:true,muni:null,label:s.country});addLog(L,`${s.country}の寮のある高校で暮らしはじめた。言葉にも少しずつ慣れていった。`,'home',true);}
+  else if(MUNI[L.birth].name==='粟島浦村'){fx(L,{j:-3,r:-2});L.savings-=0;addLog(L,'島を出て、本土の下宿で暮らしはじめた。費用がかかり、家族と離れる寂しさもあった。','home');setLoc(L,{inPref:true,muni:MI['新潟市中央区'].i,label:'新潟市'});}
+  turn(L,`${s.name}に入学`);mark(L,1,'高校');setRole(L,'school');
+  return {text:`${s.name}に合格し、入学した。`};
+}
+function pathScene(L){
+  L.stats.add('uni');L.stats.add('migr');
+  const ac=L.hsTrack==='academic';const d=myDev(L);
+  const wu=ac?(d>=50?2.2:1.4):0.5, wj=ac?0.5:1.6;
+  return scene({title:'18歳 進路を決める',body:`${L.hsName}を卒業する年です。これからの道を選びます。`,stats:['uni','migr','wage','aWage','aCompany'],opts:[
+    opt('県内の大学',()=>({next:[uniScene(L,'in')]}),['learn','local','family'],'',wu),
+    opt('県内の専門学校',L=>enterSenmon(L,true),['love','local'],'',0.8),
+    opt('県外の大学',()=>({next:[regionScene(L)]}),['learn','free','work'],'',wu*0.8),
+    opt('県外の専門学校',L=>enterSenmon(L,false),['love','free'],'',0.35),
+    job18Opt(L,true,'県内で就職',['money','local','family'],wj),
+    ...(abroadOK(L,'uni')?[opt('海外の大学',()=>({next:[abroadUniScene(L)]}),['free','learn','work'],L.school&&L.school.abroad?'海外の高校から':'',L.school&&L.school.abroad?2.5:0.6)]:[]),
+    job18Opt(L,false,'県外で就職',['money','free','work'],wj*0.35),
+    ...(sportScore(L)>=7?[opt('スポーツ推薦で大学へ',()=>({next:[sportUniScene(L)]}),['health','love'],'推薦の話が来ている',1.5)]:[])
+  ]});
+}
+// スポーツ推薦(ゲーム上の仮定): 運動を重点にした年数・運動部・好きなこと・健康から「競技の力」を出す
+// 海外の選択肢が出るか(ゲーム上の仮定)
+function abroadOK(L,stage){
+  const d=myDev(L),P=L.P;
+  if(stage==='hs')return (d>=63&&P.pct<=40)||(P.intl&&P.pct<=40&&d>=50)||d>=68;
+  if(stage==='uni')return d>=60||(L.school&&L.school.abroad)||(P.intl&&P.pct<=30&&d>=52);
+  if(stage==='study')return L.m.k>=74||P.intl||((P.vals.includes('learn')||P.vals.includes('free'))&&L.m.k>=66);
+  if(stage==='job')return (L.school&&L.school.abroad)||L.studied||L.m.k>=80||d>=66||(P.intl&&L.m.k>=72);
+  return false;
+}
+const COUNTRY=['アメリカ','イギリス','カナダ','オーストラリア','ニュージーランド','シンガポール','ドイツ','台湾'];
+function sportScore(L){return (L.sportYears||0)+(L.like==='sport'?2:0)+(L.club==='運動部'?2:0)+(L.sportRec?2:0)+(L.m.h-65)/8;}
+function sportUniScene(L){
+  L.stats.add('aSport');L.stats.add('unidev');
+  const sc=sportScore(L);const p=clamp(0.55+0.04*(sc-7),0.5,0.9);
+  const names=['日本大学','東洋大学','法政大学','中央大学','明治大学','早稲田大学','亜細亜大学','白鴎大学','常磐大学','獨協大学'];
+  const all=[];for(const r in UNI_OUT)for(const a of UNI_OUT[r])if(names.includes(a[0]))all.push({name:a[0],lo:a[1],hi:a[2],city:a[3],inPref:false});
+  const list=all.sort(()=>R()-.5).slice(0,3);
+  const opts=list.map(u=>opt(`${u.name}(偏差値${u.lo}〜${u.hi})`,L=>{const r=judgeUni(L,u,p);if(L.school&&L.school.name===u.name){fx(L,{h:2,r:2});turn(L,'スポーツ推薦で大学へ');}return r;},[],`推薦 / ${passLabel(p)}`));
+  opts.push(opt('推薦は受けず、進路を選び直す',()=>({next:[pathScene(L)]}),[],'',0.1));
+  return scene({title:'スポーツ推薦の話',body:'続けてきた競技を見てくれていた大学から、推薦の話が来ました。合否は学力試験ではなく、競技の実績と面接で決まります。',stats:['aSport','unidev'],opts});
+}
+function regionScene(L){
+  return scene({title:'県外の大学 地域を選ぶ',body:'どの地域の大学を受けますか。',opts:[
+    ...Object.keys(UNI_OUT).map(r=>opt(r,()=>({next:[uniScene(L,r)]}),r==='東京圏'?['work','free']:['learn'],'',r==='東京圏'?2:1)),
+    opt('進路を選び直す',()=>({next:[L.roninNow?roninScene(L):pathScene(L)]}),[],'',0.05)
+  ]});
+}
+function uniScene(L,region){
+  L.stats.add('unidev');L.stats.add('aPass');
+  const my=myDev(L);
+  const list=region==='in'?UNI_IN.map(u=>({...u,inPref:true})):UNI_OUT[region].map(a=>({name:a[0],lo:a[1],hi:a[2],city:a[3],inPref:false}));
+  const opts=list.map(u=>{const sd=(u.lo+u.hi)/2;const p=passP(my,sd);const dv=u.lo===u.hi?`${u.lo}`:`${u.lo}〜${u.hi}`;
+    return opt(`${u.name}(偏差値${dv})`,L=>judgeUni(L,u,p),[],passLabel(p),0.2+p*p*2);});
+  opts.push(opt('進路を選び直す',()=>({next:[L.roninNow?roninScene(L):pathScene(L)]}),[],'',0.05));
+  return scene({title:region==='in'?'県内の大学を選ぶ':`${region}の大学を選ぶ`,body:`いまの自分の偏差値は、おおよそ${my.toFixed(1)}。`,stats:['unidev','aPass'],opts});
+}
+function studyScene(L){
+  L.stats.add('aAbroad');
+  const c=pick(COUNTRY);
+  return scene({title:`${L.age}歳 留学の募集`,body:`大学で、${c}の大学に1年間留学できる募集がありました。`,stats:['aAbroad'],opts:[
+    opt(`1年間、${c}に留学する`,L=>{L.studied=true;L.everAbroad=true;L.studyYear=L.age+1;fx(L,{k:8,j:4,r:-2});mark(L,0,'留学');turn(L,`${c}に1年間留学`);return {text:`${c}に1年間留学した。`,hot:true};},['learn','free','work'],L.P.pct<=40?'費用は少なめ':'費用が大きい',0.6),
+    opt('夏休みの短期留学(1か月)',L=>{L.savings-=40;fx(L,{k:3,j:2});turn(L,`${c}に短期留学`);return {text:`夏休みに${c}へ短期留学した。`};},['love','learn']),
+    opt('留学はせず、日本で学ぶ',L=>({text:'留学はせず、日本で学び続けた。'}),['family','local','money'])
+  ]});
+}
+function abroadUniScene(L){
+  L.stats.add('aAbroad');
+  const my=myDev(L)+(L.school&&L.school.abroad?4:0)+(L.P.intl?2:0);
+  const list=[['アメリカの州立大学',58,'アメリカ'],['アメリカの難関私立大学',72,'アメリカ'],['イギリスの大学',66,'イギリス'],['カナダの大学',60,'カナダ'],['オーストラリアの大学',58,'オーストラリア'],['シンガポールの大学',67,'シンガポール']];
+  const opts=list.map(a=>{const p=passP(my,a[1]);const u={name:a[0],lo:a[1],hi:a[1],city:a[2],inPref:false,abroad:true};
+    return opt(`${a[0]}(難しさの目安 ${a[1]})`,L=>judgeUni(L,u,p),[],`${passLabel(p)} / 学費・生活費が大きい`,0.2+p*p*2);});
+  opts.push(opt('進路を選び直す',()=>({next:[L.roninNow?roninScene(L):pathScene(L)]}),[],'',0.05));
+  return scene({title:'海外の大学を選ぶ',body:`語学の試験と書類で選考されます。いまの自分の力は、目安でおおよそ${my.toFixed(1)}です。`,stats:['aAbroad'],opts});
+}
+function judgeUni(L,u,p){
+  if(R()<p){
+    L.school={type:'univ',name:u.name,end:L.age+4,inPref:u.inPref,city:u.city||u.muni,abroad:!!u.abroad};
+    L.roninNow=false;L.edu='univ_pending';
+    if(u.inPref){setLoc(L,{inPref:true,muni:MI[u.muni].i,label:MI[u.muni].city});}
+    else if(u.abroad){setLoc(L,{inPref:false,abroad:true,muni:null,label:u.city});fx(L,{r:-6,k:3});addLog(L,`${u.city}で学生生活をはじめた。`,'home',true);}
+    else{setLoc(L,{inPref:false,muni:null,label:u.city});fx(L,{r:-6});addLog(L,`${u.city}でひとり暮らしをはじめた。`,'home');}
+    fx(L,{k:5,j:4});turn(L,`${u.name}に入学${L.ronin?`(浪人${L.ronin}年)`:''}`);mark(L,1,'大学');setRole(L,'school');
+    return {text:`${u.name}に合格した。`,hot:true};
+  }
+  addLog(L,`${u.name}は不合格だった。`,'learn',true);
+  return {text:`${u.name}は不合格だった。`,next:[failScene(L)]};
+}
+function failScene(L){
+  const o=[];
+  if(L.ronin<2)o.push(opt(`浪人して、もう一度挑む(${L.ronin+1}年目)`,L=>{L.ronin++;L.roninNow=true;L.school=null;fx(L,{j:-4,r:-3,k:5});L.sched.ronin=L.age+1;turn(L,`浪人を決めた(${L.ronin}年目)`);setRole(L,'school');return {text:'浪人して、来年もう一度受けることにした。'};},['learn','work'],'費用がかかる',1.2));
+  o.push(opt('専門学校に進む',L=>enterSenmon(L,true),['love','money'],'',1));
+  o.push(job18Opt(L,true,'進学をやめて就職する',['money','family'],1));
+  return scene({title:'大学に届かなかった',body:'合格には届きませんでした。これからどうしますか。',opts:o});
+}
+function roninScene(L){
+  return scene({title:`浪人${L.ronin}年目 ふたたびの受験`,body:'1年間の勉強を終えて、また受験の時期が来ました。',opts:[
+    opt('県内の大学を受ける',()=>({next:[uniScene(L,'in')]}),['local','family']),
+    opt('県外の大学を受ける',()=>({next:[regionScene(L)]}),['free','work']),
+    opt('専門学校に進む',L=>enterSenmon(L,true),['love'],'',0.4),
+    job18Opt(L,true,'就職する',['money'],0.4)
+  ]});
+}
+function enterSenmon(L,inPref){
+  L.school={type:'senmon',name:'専門学校',end:L.age+2,inPref};L.roninNow=false;
+  if(inPref)setLoc(L,{inPref:true,muni:hubMuni(L),label:HUB[MUNI[L.birth].hub].city});
+  else{setLoc(L,{inPref:false,muni:null,label:'東京圏'});fx(L,{r:-6});addLog(L,'東京圏でひとり暮らしをはじめた。','home');}
+  fx(L,{k:3,j:3});turn(L,`${inPref?'県内':'県外'}の専門学校に進学`);mark(L,1,'専門学校');setRole(L,'school');
+  return {text:`${inPref?'県内':'県外'}の専門学校に進んだ。`};
+}
+function beginWork(L,job,loc){
+  L.school=null;L.roninNow=false;L.job=job;L.unemp=false;L.workStart=L.age;
+  if(loc)setLoc(L,loc);
+  setRole(L,'work');mark(L,1,'就職');
+  L.focus=defaultFocus(L);
+}
+// 実在する企業の例(名前と本社・拠点の地域のみを使う。年収や出来事はその企業の実際とは関係ない)
+const CO={
+  inL:[['第四北越銀行','新潟市'],['亀田製菓','新潟市'],['コメリ','新潟市'],['福田組','新潟市'],['東北電力 新潟支店','新潟市'],['ブルボン','柏崎市'],['北越コーポレーション','長岡市'],['アクシアル リテイリング','長岡市'],['日本精機','長岡市'],['岩塚製菓','長岡市'],['雪国まいたけ','南魚沼市'],['コロナ','三条市']],
+  inS:[['大光銀行','長岡市'],['越後製菓','長岡市'],['一正蒲鉾','新潟市'],['三幸製菓','新潟市'],['栗山米菓','新潟市'],['本間組','新潟市'],['新潟交通','新潟市'],['ダイニチ工業','新潟市'],['新潟運輸','新潟市'],['植木組','柏崎市'],['ツインバード','燕市'],['スノーピーク','三条市'],['藤次郎','燕市'],['岩の原葡萄園','上越市'],['上越タイムス社','上越市'],['市島酒造','新発田市'],['大洋酒造','村上市'],['八海醸造','南魚沼市'],['尾畑酒造','佐渡市'],['北雪酒造','佐渡市'],['白瀧酒造','湯沢町'],['加賀の井酒造','糸魚川市'],['君の井酒造','妙高市'],['原酒造','柏崎市'],['津南醸造','津南町'],['弥彦酒造','弥彦村'],['麒麟山酒造','阿賀町'],['加茂錦酒造','加茂市']],
+  inL18:[['亀田製菓(工場)','新潟市'],['ブルボン(工場)','柏崎市'],['日本精機(工場)','長岡市'],['北越コーポレーション(工場)','長岡市'],['雪国まいたけ(生産拠点)','南魚沼市'],['コメリ(店舗)','新潟市'],['アクシアル リテイリング(原信・ナルス)','長岡市']],
+  outL:[['トヨタ自動車','名古屋圏'],['日立製作所','東京圏'],['ソニーグループ','東京圏'],['三菱UFJ銀行','東京圏'],['NTTデータ','東京圏'],['楽天グループ','東京圏'],['ソフトバンク','東京圏'],['東京海上日動火災保険','東京圏'],['三井物産','東京圏'],['伊藤忠商事','東京圏'],['KDDI','東京圏'],['富士通','東京圏'],['パナソニック','大阪'],['キーエンス','大阪']],
+  outL18:[['トヨタ自動車(工場)','名古屋圏'],['デンソー(工場)','名古屋圏'],['SUBARU(工場)','群馬'],['ヤマト運輸','東京圏'],['JR東日本','東京圏'],['イオンリテール','東京圏']],
+  outS:[['東京圏の中小企業(ソフトウェア開発)','東京圏'],['東京圏の中小企業(広告・デザイン)','東京圏'],['東京圏の中小企業(機械部品)','東京圏'],['仙台の中小企業(食品の卸)','仙台'],['大阪の中小企業(専門商社)','大阪']],
+  abroad:{'アメリカ':['Google','Amazon','Microsoft'],'イギリス':['HSBC','Unilever'],'カナダ':['Shopify','カナダロイヤル銀行(RBC)'],'オーストラリア':['Atlassian','BHP'],'ニュージーランド':['Fonterra','Air New Zealand'],'シンガポール':['DBS銀行','Grab'],'ドイツ':['Siemens','SAP'],'台湾':['TSMC','ASUS']}
+};
+// 転職・再就職: いま住んでいる場所で働ける会社を選ぶ
+function newCompany(L){
+  let size,co;
+  if(L.loc.abroad){size='x';co=pickCompany(L,'x',false);}
+  else if(L.loc.inPref){size=R()<.3?'l':'s';co=pickCompany(L,size,true,{city:muniOf(L).city,home:size==='s'});}
+  else{size=R()<.35?'l':'s';co=pickCompany(L,size,false);}
+  L.job={...makeJob(size,L.loc.inPref,co)};return co;
+}
+function cityMuni(city){const m=city==='新潟市'?MI['新潟市中央区']:MI[city];return m?m.i:null;}
+function office(city){return city+(/[町村]$/.test(city)?'役場':'役所');}
+function pickCompany(L,size,inPref,o){
+  o=o||{};
+  if(size==='x'){const c=o.country||(L.loc.abroad&&CO.abroad[L.loc.label]?L.loc.label:pick(Object.keys(CO.abroad)));return {name:pick(CO.abroad[c]),place:c};}
+  if(size==='p'){const city=o.city||MUNI[L.birth].city;return R()<.5?{name:'新潟県庁',place:'新潟市'}:{name:office(city),place:city};}
+  if(inPref){
+    const list=size==='l'?(o.hs?CO.inL18:CO.inL):CO.inS;
+    const near=o.city?list.filter(c=>c[1]===o.city):[];
+    if(o.home&&!near.length){const hub=HUB[MUNI[L.birth].hub].city;const nh=list.filter(c=>c[1]===hub);const c=pick(nh.length?nh:list);return {name:c[0],place:c[1],near:true};}
+    const c=near.length&&(o.home||R()<.5)?pick(near):pick(list);return {name:c[0],place:c[1]};
+  }
+  const c=pick(size==='l'?(o.hs?CO.outL18:CO.outL):CO.outS);return {name:c[0],place:c[1],generic:size==='s'};
+}
+function makeJob(size,inPref,co){return {size,inPref,company:co.name,label:`${co.name} 勤務`};}
+function coNote(co,L,edu,size){return `${co.generic?'業種の例 / ':size==='p'?'実在の機関 / ':co.near?`実在の企業(${co.place}) / `:'実在の企業 / '}初年度 年収 約${estWage(L,edu,size)}万円`;}
+function pre18(L,inPref){const size=R()<(inPref?0.3:0.4)?'l':'s';return {size,co:pickCompany(L,size,inPref,{hs:true,city:MUNI[L.birth].city,home:inPref&&size==='s'})};}
+function job18Opt(L,inPref,label,v,w){const pr=pre18(L,inPref);return opt(`${label}: ${pr.co.name}`,L=>startJob18(L,inPref,pr),v,coNote(pr.co,L,'hs',pr.size),w);}
+function startJob18(L,inPref,pr){
+  L.edu='hs';L.stats.add('wage');L.stats.add('aWage');L.stats.add('aMoney');L.stats.add('aCompany');
+  pr=pr||pre18(L,inPref);const {size,co}=pr;
+  const job=makeJob(size,inPref,co);
+  if(inPref){const mi=size==='s'?(L.loc.inPref?L.loc.muni:L.birth):cityMuni(co.place);beginWork(L,job,{inPref:true,muni:mi,label:MUNI[mi].city});}
+  else{beginWork(L,job,{inPref:false,muni:null,label:co.place});fx(L,{r:-6});addLog(L,`${co.place}で働きはじめた。`,'home');}
+  turn(L,`${co.name}に就職(${inPref?'県内':'県外'})`);
+  return {text:`${co.name}に就職した。初年度の年収は約${estWage(L,L.edu,size)}万円(額面)。`,hot:true};
+}
+// 就職したときの年収の見込み(額面、10万円単位)
+function estWage(L,edu,size){const e=L.edu,j=L.job,c=L.career;L.edu=edu;L.job={size};L.career=0;const w=wageBase(L);L.edu=e;L.job=j;L.career=c;return Math.round(w/10)*10;}
+function gradScene(L){
+  const s=L.school;const kind=s.type==='univ'?'大学':'専門学校';
+  L.edu=s.type==='univ'?'univ':'senmon';
+  L.stats.add('wage');L.stats.add('aWage');L.stats.add('aMoney');
+  const home=MUNI[L.birth];
+  const mk=(size,inPref,toHome,co)=>L=>{
+    const job=makeJob(size,inPref,co);L.stats.add('aCompany');
+    let loc;
+    if(inPref)loc=toHome?{inPref:true,muni:home.i,label:home.city}:(()=>{const mi=cityMuni(co.place);return {inPref:true,muni:mi,label:MUNI[mi].city};})();
+    else if(size==='x')loc={inPref:false,abroad:true,muni:null,label:co.place};
+    else loc={inPref:false,muni:null,label:co.place};
+    const wasIn=L.loc.inPref;if(size==='x')L.stats.add('aAbroad');
+    beginWork(L,job,loc);
+    if(!inPref&&wasIn){fx(L,{r:-6});addLog(L,size==='x'?`${co.place}で働くため、日本を離れた。`:'県外で働くため、新潟を離れた。','home');}
+    turn(L,`${kind}を卒業し、${co.name}に就職`);
+    return {text:`${kind}を卒業し、${co.name}に就職した。初年度の年収は約${estWage(L,L.edu,size)}万円(額面)。`,hot:true};
+  };
+  const cHome=pickCompany(L,'s',true,{city:home.city,home:true}),cInL=pickCompany(L,'l',true,{city:home.city}),cP=pickCompany(L,'p',true,{city:home.city}),cOutL=pickCompany(L,'l',false),cOutS=pickCompany(L,'s',false);
+  const cX=abroadOK(L,'job')?pickCompany(L,'x',false):null;
+  return scene({title:`${kind}を卒業 就職先を選ぶ`,body:`${s.type==='univ'?s.name:'専門学校'}を卒業します。どこで働きますか。年収は賃金の統計をもとにした初年度の試算(額面)で、その企業の実際の給与ではありません。`,stats:['wage','aWage','aCompany','migr'],opts:[
+    opt(`ふるさと(${home.city})で働く: ${cHome.name}`,mk('s',true,true,cHome),['family','local'],coNote(cHome,L,L.edu,'s'),1),
+    opt(`県内の大きな会社: ${cInL.name}`,mk('l',true,false,cInL),['work','money'],coNote(cInL,L,L.edu,'l'),0.9),
+    opt(`県内の役所: ${cP.name}`,mk('p',true,false,cP),['money','local'],coNote(cP,L,L.edu,'p'),0.6),
+    opt(`県外の大きな会社: ${cOutL.name}(${cOutL.place})`,mk('l',false,false,cOutL),['work','free'],coNote(cOutL,L,L.edu,'l'),s.inPref?0.6:1.4),
+    opt(`県外の中小企業: ${cOutS.name}`,mk('s',false,false,cOutS),['free','love'],coNote({generic:true},L,L.edu,'s'),s.inPref?0.3:0.8),
+    ...(cX?[opt(`海外で就職: ${cX.name}(${cX.place})`,mk('x',false,false,cX),['free','work','learn'],coNote(cX,L,L.edu,'x')+' / 生活費も高い',s.abroad?2.2:0.25)]:[])
+  ]});
+}
+function loveScene(L){
+  L.stats.add('aMarry');L.stats.add('tfr');
+  return scene({title:`${L.age}歳 大切な人`,body:'いっしょにいると落ち着く人がいます。これからのことを考えます。',stats:['aMarry','tfr'],opts:[
+    opt('この人と結婚する',L=>{marry(L);return {text:'結婚した。',hot:true};},['family','local'],'',1.6),
+    opt('いまは、このままの関係で',L=>{L.maybeMarry=true;fx(L,{j:1});turn(L,'結婚は急がないことにした');return {text:'結婚は、いまは決めないことにした。'};},['free','work']),
+    opt('ひとりの時間を大切にする',L=>{L.maybeMarry=R()<.35;fx(L,{j:1,r:-1});turn(L,'ひとりの暮らしを選んだ');return {text:'ひとりの暮らしを続けることにした。'};},['free','love'],'',0.7)
+  ]});
+}
+function marry(L){L.married=true;L.marriedAt=L.age;L.spouseAge=L.age+ri(-3,4)*(L.sex==='m'?-1:1);L.spouseAlive=true;fx(L,{j:6,r:4});turn(L,'結婚');mark(L,2,'結婚');}
+function transferScene(L){
+  return scene({title:`${L.age}歳 仕事の転機`,body:'会社から異動の話がありました。ほかの会社からも声がかかっています。',stats:['migr'],opts:[
+    opt('転勤を受けて、別の土地へ',L=>{
+      L.career+=2;fx(L,{r:-4,k:2});
+      let to;
+      if(L.loc.inPref){if(R()<.5)to={inPref:false,muni:null,label:pick(['東京圏','仙台','大阪','名古屋'])};else{const m=pick(['新潟市中央区','長岡市','上越市'].map(n=>MI[n]).filter(m=>m.i!==L.loc.muni));to={inPref:true,muni:m.i,label:m.city};}}
+      else{if(R()<.4){const m=MI[pick(['新潟市中央区','長岡市','上越市'])];to={inPref:true,muni:m.i,label:m.city};}else to={inPref:false,muni:null,label:pick(['東京圏','仙台','大阪','名古屋','福岡'])};}
+      setLoc(L,to);turn(L,`転勤で${to.label}へ`);mark(L,0,'転勤');return {text:`転勤で${to.label}に移った。`};},['work','free']),
+    opt('転職する',L=>{const co=newCompany(L);L.career=Math.max(0,L.career-2);fx(L,{j:3,k:2});turn(L,`${co.name}に転職`);mark(L,1,'転職');return {text:`${co.name}に転職した。`};},['free','love']),
+    opt('いまの場所に残る',L=>{fx(L,{j:1,r:2});turn(L,'いまの職場に残った');return {text:'いまの職場に残ることにした。'};},['family','local'],'',1.3)
+  ]});
+}
+function houseScene(L){
+  const cost=L.loc.inPref?3000:4200;
+  const o=[
+    opt(`家を買う(住宅ローン ${fmt(cost)}万円)`,L=>{L.ownHouse=true;L.home='own';L.savings-=300;L.loan=cost;L.loanPay=Math.round(cost/0.85/32);fx(L,{j:3});turn(L,'家を買った');mark(L,0,'家');L.stats.add('aMoney');return {text:'家を買った。35年近いローンがはじまった。',hot:true};},['family','money'],'',L.married?1.6:0.5),
+    opt('借りたまま暮らす',L=>{fx(L,{j:1});turn(L,'借りて暮らし続けた');return {text:'借りて暮らし続けることにした。'};},['free'])
+  ];
+  if(L.parents.some(p=>p.alive))o.push(opt('実家に戻って暮らす',L=>{L.home='family';const h=MUNI[L.birth];setLoc(L,{inPref:true,muni:h.i,label:h.city});fx(L,{r:2,j:-1});turn(L,'実家に戻った');mark(L,0,'実家');return {text:'実家に戻って暮らしはじめた。'};},['family','local','money'],'',0.6));
+  return scene({title:`${L.age}歳 住まいを考える`,body:'これからどこに、どう住むかを決めます。',stats:['aMoney'],opts:o});
+}
+function careScene(L,p){
+  L.stats.add('aCare');L.stats.add('aged');
+  const o=[
+    opt('自分で介護する(仕事を減らす)',L=>{L.careYears=3;L.careMode='self';L.cared=true;fx(L,{j:-5,h:-3,r:2});turn(L,`${p.role}の介護を自分で担った`);mark(L,2,'介護');return {text:`${p.role}の介護のために、働く時間を減らした。`};},['family'],'収入が減る'),
+    opt('介護サービスを使って、仕事と両立する',L=>{L.careYears=3;L.careMode='service';L.carePay=50;L.cared=true;fx(L,{j:-2});turn(L,`${p.role}の介護をサービスと両立`);mark(L,2,'介護');return {text:'介護サービスを使いながら、仕事を続けた。'};},['work','money'])
+  ];
+  if(L.sibOlder+L.sibYounger>0)o.push(opt('きょうだいと分担する',L=>{L.careYears=3;L.careMode='share';L.cared=true;fx(L,{j:-1,r:1});turn(L,`${p.role}の介護をきょうだいと分担`);mark(L,2,'介護');return {text:'きょうだいと話し合い、介護を分担した。'};},['family','local']));
+  return scene({title:`${L.age}歳 親の介護`,body:`${p.role}(${p.age}歳)の暮らしに、手助けが必要になってきました。${L.loc.inPref?'':'離れて暮らしているので、通うにも時間がかかります。'}`,stats:['aCare','aged'],opts:o});
+}
+function retireScene(L){
+  return scene({title:'60歳 定年',body:'定年の年を迎えました。これからの働き方を決めます。',stats:['aMoney'],opts:[
+    opt('定年で退職する',L=>{retire(L);fx(L,{j:2});turn(L,'60歳で退職');return {text:'定年で退職した。'};},['free','health','family']),
+    opt('再雇用で65歳まで働く',L=>{retire(L);L.reemp=65;turn(L,'再雇用で65歳まで勤務');return {text:'再雇用で働き続けることにした。'};},['work','money'],'',1.4),
+    opt('地域の仕事をはじめる',L=>{retire(L);L.localJob=70;fx(L,{r:3});turn(L,'地域の仕事をはじめた');return {text:'地域の仕事をはじめた。'};},['local'])
+  ]});
+}
+function retire(L){
+  if(L.job&&L.workStart!=null){const yrs=L.age-L.workStart;const per=L.job.size==='l'?40:L.job.size==='p'?38:18;L.savings+=yrs*per;addLog(L,`退職金として約${fmt(yrs*per)}万円を受け取った(仮定)。`,'work');}
+  L.retired=true;L.unemp=false;setRole(L,'retired');mark(L,1,'退職');L.focus=defaultFocus(L);
+}
+function snowScene(L){
+  return scene({title:`${L.age}歳 屋根の雪`,body:'屋根に雪が厚く積もりました。このままでは家がきしみます。',stats:['snowex'],opts:[
+    opt('自分で屋根に上がって下ろす',L=>{if(R()<.15){fx(L,{h:-15});mark(L,3,'けが');turn(L,'雪下ろし中に屋根から落ちた');return {text:'雪下ろしの途中で屋根から落ち、けがをした。',hot:true};}fx(L,{h:-2,j:1});return {text:'なんとか自分で雪を下ろした。'};},['free','money']),
+    opt('業者に頼む',L=>{L.savings-=15;return {text:'業者に頼んで雪を下ろしてもらった(約15万円)。'};},['health','money'],'',1.3),
+    opt('近所の人に手伝ってもらう',L=>{fx(L,{r:3});return {text:'近所の人たちと声をかけあって、雪を下ろした。'};},['local','family'],'',1.2)
+  ]});
+}
+function licenseScene(L){
+  return scene({title:'75歳 運転免許',body:'免許の更新の時期です。体の衰えも感じます。',opts:[
+    opt('免許を返納する',L=>{L.license=false;fx(L,{j:-2,r:-1});turn(L,'運転免許を返納');return {text:'運転免許を返納した。'};},['health','family'],'',1.3),
+    opt('もう少し運転を続ける',L=>{L.license=true;turn(L,'運転を続けることにした');return {text:'もう少し運転を続けることにした。'};},['free'])
+  ]});
+}
+const ILL={cancer:'がん',heart:'心臓の病気',brain:'脳の病気',other:'そのほかの重い病気'};
+function illScene(L){
+  L.stats.add('aIll');
+  return scene({title:`${L.age}歳 治療の選択`,body:`${ILL[L.illness.type]}と診断されました。治療の方針を決めます。`,stats:['aIll'],opts:[
+    opt('標準的な治療を受ける',L=>{fx(L,{h:5});L.savings-=30;return {text:'標準的な治療を受けた。'};},['health','money'],'',1.6),
+    opt('負担は大きいが、積極的な治療に挑む',L=>{L.savings-=60;fx(L,{j:-2});if(R()<.6){fx(L,{h:10});return {text:'積極的な治療を受け、手ごたえがあった。'};}fx(L,{h:-4});return {text:'積極的な治療を受けたが、体への負担が大きかった。'};},['work','learn']),
+    opt('痛みを和らげ、暮らしを大切にする',L=>{fx(L,{h:-2,j:4});return {text:'暮らしを大切にする治療を選んだ。'};},['family','free','love'],'',0.6)
+  ]});
+}
+
+/* ============ 1年進める ============ */
+const LAND={
+  '新潟市中央区':'信濃川の河口近く、橋の上から夕方の日本海が見えた。','新潟市西区':'砂丘の上の道から、海と佐渡の島影が見えた。','新潟市東区':'空港の近くで、飛行機の音を聞きながら育った。',
+  '新潟市北区':'潟のほとりに、白鳥がたくさん来ていた。','新潟市秋葉区':'里山の緑と、古い町並みの間を歩いた。','新潟市江南区':'見わたすかぎりの田んぼの向こうに、街が見えた。',
+  '新潟市西蒲区':'山のふもとに、ぶどう畑と田んぼが広がっていた。','新潟市南区':'春、川の土手で大きな凧が揚がるのを見た。',
+  '長岡市':'夏の夜、河川敷で大きな花火を見上げた。','上越市':'春、城跡の堀に桜の花びらが浮かんでいた。','佐渡市':'田んぼの上を、トキがゆっくり飛んでいった。','粟島浦村':'船の時間に合わせて、一日の予定を決める暮らしだった。',
+  '村上市':'秋、川をのぼってくる鮭を見に行った。','糸魚川市':'海岸で、緑色の石を探して歩いた。','十日町市':'雪が消えた棚田に、水が張られていた。','津南町':'雪が消えると、畑に一気に緑が戻ってきた。',
+  '南魚沼市':'稲刈りのあとの田んぼで、日が暮れるまで遊んだ。','魚沼市':'山あいの川で、冷たい水に足をひたした。','湯沢町':'冬になると、町にスキーの人たちが増えた。',
+  '燕市':'町工場から、金属を打つ音が聞こえてきた。','三条市':'町工場から、金属を削る音が聞こえてきた。','柏崎市':'夕方、日本海に沈む夕日を見た。','刈羽村':'夕方、海のほうの空が赤く染まった。','出雲崎町':'海沿いの細長い町並みを、自転車で走った。','妙高市':'山の上に、遅くまで雪が残っていた。'
+};
+const LAND_REG={'都市部':'バスの窓から、にぎやかな通りを眺めた。','地方都市':'駅前の通りと、その先に広がる田んぼを見て育った。','中山間':'山と川にはさまれた集落で、季節の移り変わりを見た。','豪雪地帯':'2階の窓の高さまで、雪が積もった。','離島':'港に船が着くと、島が少しにぎやかになった。','町村部':'近所の人がみんな顔見知りだった。'};
+
+function stepYear(){
+  const L=G.L; if(!L.alive)return;
+  L.yearEv=[];L.yearStats=[];
+  // 死亡判定(この1年を生きられるか)
+  const mult=clamp(Math.exp((expH(L.age)-L.m.h)/28),0.5,3);
+  let q=hz(L.age,L.sex)*mult*MORTK+L.extraHaz;
+  if(L.age>=110)q=1;
+  if(R()<q){die(L,L.extraHaz>0&&R()<L.extraHaz/q?'災害の影響':null);return;}
+  L.extraHaz=0;
+  L.age++;
+  const a=L.age;
+  // 家族の年
+  for(const p of L.parents){if(!p.alive)continue;p.age++;if(R()<hz(p.age-1,p.sex)*MORTK){p.alive=false;addLog(L,`${p.role}が${p.age}歳で亡くなった。`,'family',true);mark(L,2,`${p.role}の死`);fx(L,{j:-8,r:-2});turn(L,`${p.role}との別れ`);}}
+  if(L.married&&L.spouseAlive){L.spouseAge++;if(R()<hz(L.spouseAge-1,L.sex==='m'?'f':'m')*MORTK){L.spouseAlive=false;addLog(L,`連れ合いが${L.spouseAge}歳で亡くなった。`,'family',true);mark(L,2,'死別');fx(L,{j:-12,r:-4});turn(L,'連れ合いとの別れ');}}
+  for(const k of L.kids){if(k.alive&&R()<hz(a-k.born,k.sex)*MORTK*0.6){k.alive=false;addLog(L,'子どもを亡くした。','family',true);fx(L,{j:-15});mark(L,2,'子の死');}}
+  // 学校の節目
+  if(a===6){addLog(L,'小学校に入学した。','learn');mark(L,1,'小学校');setRole(L,'school');}
+  if(a===12)addLog(L,'中学校に入学した。','learn');
+  if(a===6||a===15)L.focus=defaultFocus(L);
+  if(L.careYears>0){L.careYears--;if(!L.careYears){L.carePay=0;L.careMode=null;}}
+  // メーター
+  updateMeters(L);
+  // お金
+  finance(L);
+  // 場面
+  const Q=G.queue;
+  if(MILE[a])Q.push(mileScene(a));
+  if(a===7)Q.push(likeScene(L));
+  if(a===12)Q.push(clubScene(L));
+  if(a===15)Q.push(hsScene(L));
+  if(a===18&&L.school&&L.school.type==='hs')Q.push(pathScene(L));
+  if(L.roninNow&&L.sched.ronin===a)Q.push(roninScene(L));
+  if(L.school&&L.school.type!=='hs'&&L.school.end===a)Q.push(gradScene(L));
+  const working=L.job&&!L.retired;
+  if(a===L.sched.love&&!L.married)Q.push(loveScene(L));
+  if(a===L.sched.transfer&&working&&!L.unemp)Q.push(transferScene(L));
+  if(working&&L.unemp&&a>L.unempAt){L.unemp=false;const co=newCompany(L);addLog(L,`${co.name}で新しく働きはじめた。`,'work');turn(L,`${co.name}で再就職`);}
+  if(a>=L.sched.house&&a<=38&&!L.ownHouse&&!L.houseAsked&&working){L.houseAsked=true;Q.push(houseScene(L));}
+  if(a>=L.sched.care&&a<=62&&!L.careAsked){const p=L.parents.find(p=>p.alive&&p.age>=75);if(p){L.careAsked=true;Q.push(careScene(L,p));}}
+  if(a===60&&working&&!L.retired)Q.push(retireScene(L));
+  if(a>=60&&L.job&&!L.retired&&!Q.some(s=>s.title==='60歳 定年')){retire(L);}
+  if(L.reemp===a)addLog(L,'再雇用の仕事を終えた。','work');
+  if(L.age>=L.sched.snow&&!L.snowAsked&&L.loc.inPref&&muniOf(L).snow>=2&&a<=85){L.snowAsked=true;L.stats.add('snowex');Q.push(snowScene(L));}
+  if(a===75)Q.push(licenseScene(L));
+  if(L.school&&L.school.type==='univ'&&!L.school.abroad&&a===L.school.end-2&&!L.studyAsked&&abroadOK(L,'study')){L.studyAsked=true;Q.push(studyScene(L));}
+  // 出来事
+  randomEvents(L);
+  // ほかの3人
+  for(const o of G.others)stepOther(o,a);
+  if(!L.yearEv.length)L.yearEv.push({text:pick(['静かな1年だった。','いつもと変わらない日々が続いた。','季節がひとめぐりした。']),hot:false,quiet:true});
+}
+function updateMeters(L){
+  const a=L.age;const f=focusDef(L);
+  const tg={h:expH(a)-2.5,j:62,k:a<23?66:60,r:62};
+  if(L.illness)tg.h-=12;
+  for(const k in L.m){
+    let d=(tg[k]-L.m[k])*0.12+gauss()*1.1;
+    if(f&&f[2][k])d+=f[2][k]*0.6;
+    L.m[k]=clamp(L.m[k]+d,0,100);
+  }
+  if(f&&f[4]&&f[4].career)L.career+=1;
+  if(f&&(f[0]==='sport'||f[0]==='club')&&a<=18)L.sportYears=(L.sportYears||0)+1;
+  if(a===6||a===12)L.focus=defaultFocus(L);
+  L.maxK=Math.max(L.maxK,L.m.k);L.maxR=Math.max(L.maxR,L.m.r);
+}
+function randomEvents(L){
+  const a=L.age;const m=muniOf(L);
+  // 災害
+  for(const d of DIS){
+    const happens=R()<d.rate;
+    if(happens)G.prefDis[d.key]++;
+    let hit=false;
+    if(L.loc.inPref){if(happens&&R()<0.18*disMul(m,d.key))hit=true;}
+    else if(d.key!=='snow'&&R()<d.rate*0.8&&R()<0.18)hit=true;
+    if(hit)disaster(L,d);
+  }
+  // 病気
+  if(!L.illness&&a>=20){
+    const mult=clamp(Math.exp((expH(a)-L.m.h)/28),0.5,3);
+    const p=0.0006*Math.exp(0.075*(a-30))*mult;
+    if(R()<p){const t=wpick(Object.keys(ILL),k=>({cancer:55,heart:20,brain:15,other:10})[k]);L.illness={type:t,until:a+ri(1,4)};L.illCount++;
+      fx(L,{h:t==='other'?-8:t==='cancer'?-12:-15,j:-4});addLog(L,`${ILL[t]}と診断された。`,'health',true);mark(L,3,ILL[t]);turn(L,`${ILL[t]}と診断`);G.queue.push(illScene(L));}
+  } else if(L.illness&&a>=L.illness.until){
+    if(R()<0.75){addLog(L,`${ILL[L.illness.type]}の治療がひと区切りついた。`,'health');L.illness=null;}else L.illness.until=a+1;
+  }
+  // 失業
+  if(L.job&&!L.retired&&!L.unemp&&a>=20&&a<=59){
+    const f=focusDef(L);const p=0.025*(f&&f[0]==='work'?0.7:1);
+    if(R()<p){L.unemp=true;L.unempAt=a;fx(L,{j:-6});addLog(L,'勤め先を離れることになり、仕事を探しはじめた。','work',true);mark(L,1,'失業');turn(L,'失業');L.stats.add('aUnemp');}
+  }
+  // 結婚(あとから)
+  if(!L.married&&!L.divorced&&L.maybeMarry&&a>L.sched.love&&a<=45&&R()<0.06){marry(L);addLog(L,'結婚した。','family',true);}
+  if(L.divorced&&!L.married&&a<=55&&R()<0.03){marry(L);addLog(L,'再婚した。','family',true);}
+  // 子ども
+  if(L.married&&L.spouseAlive){
+    const wa=L.sex==='f'?a:L.spouseAge;const n=L.kids.length;
+    if(wa>=22&&wa<=42){const p=[0.3,0.21,0.08,0.025,0][Math.min(n,4)]*(wa>38?0.5:1);
+      if(R()<p){const sex=R()<.51?'m':'f';L.kids.push({born:a,sex,alive:true});addLog(L,`${n===0?'はじめての':`${n+1}人目の`}子どもが生まれた。`,'family',true);mark(L,2,'誕生');fx(L,{j:6,r:3,h:-1});turn(L,`${n+1}人目の子どもが誕生`);if(L.sex==='f')L.leaveYear=a;}}
+    if(R()<0.006&&a<70){L.married=false;L.divorced=true;addLog(L,'離婚した。','family',true);mark(L,2,'離婚');fx(L,{j:-8,r:-3});turn(L,'離婚');}
+  }
+  // 子どもの成長
+  for(const k of L.kids){if(!k.alive)continue;const ka=a-k.born;if(ka===6)addLog(L,'子どもが小学校に入った。','family');if(ka===18)addLog(L,'子どもが高校を卒業した。','family');}
+  // 交通事故
+  const accP=0.004*(a>=75&&L.license?2.2:1);
+  if(R()<accP){fx(L,{h:-8,j:-3});addLog(L,a>=75&&L.license?'運転中に事故を起こし、けがをした。':'交通事故にあい、けがをした。','health',true);mark(L,3,'事故');}
+  // ひとことの出来事
+  if(R()<0.42)minorEvent(L);
+}
+function disaster(L,d){
+  L.stats.add('dis');L.stats.add('aDis');
+  const r=R();const sev=r<0.6?'小':r<0.9?'中':'大';
+  L.disasters++;
+  let t;
+  if(sev==='小'){fx(L,{h:-1,j:-2});t=`${d.name}があった。停電や片づけに追われた。`;}
+  else if(sev==='中'){fx(L,{j:-5,r:3});L.savings-=80;t=`${d.name}で住まいの一部が壊れた。近所で助け合って片づけた。`;}
+  else{fx(L,{j:-8,h:-5});L.savings-=300;L.disBig++;t=`${d.name}で避難所に身を寄せた。住まいは大きく壊れた。`;if(L.age>=70)L.extraHaz+=0.02;}
+  addLog(L,t,'disaster',true);mark(L,4,d.name);if(sev!=='小')turn(L,`${d.name}(被害${sev})`);
+  if(L.loc.inPref){const ex=DIS_EX[d.key].slice().sort(()=>R()-.5).slice(0,R()<.5?1:2);ex.forEach(e=>L.yearStats.push(['real',`県の記録: ${e}`]));}
+  L.yearStats.push(STAT.dis,STAT.aDis);
+}
+function minorEvent(L){
+  const a=L.age;const m=muniOf(L);const pool=[];
+  const add=(w,fn)=>pool.push({w,fn});
+  if(a>=3&&a<=12&&L.loc.inPref&&m.snow>=1)add(2,()=>{fx(L,{j:2});return pick(['大きな雪だるまを作った。','屋根から落ちた雪の山を、すべり台にして遊んだ。','雪の朝、長靴で通学路を歩いた。']);});
+  if(a>=4&&a<=16&&L.loc.inPref)add(2,()=>{fx(L,{j:1});return LAND[m.name]||LAND_REG[regionOf(m)];});
+  if(a>=8&&a<=14)add(1,()=>{fx(L,{r:2});return pick(['運動会で、思っていたより速く走れた。','夏休みに、祖父母の家で過ごした。','友だちと秘密の場所を見つけた。']);});
+  if(a>=8&&a<=14&&L.like)add(1,()=>{fx(L,{j:2,k:1});return {sport:'外で走り回るのが、ますます好きになった。',art:'描いた絵が、教室に飾られた。',music:'発表会で、歌を披露した。',book:'図書館の本を、たくさん借りた。',nature:'川で、めずらしい生き物を見つけた。',game:'難しいパズルを、ひとりで解けた。'}[L.like];});
+  if(a>=25&&a<=60)add(1,()=>{fx(L,{r:3,j:1});mark(L,2,'再会');return '同級生と、久しぶりに再会した。';});
+  if(a>=25&&a<=38)add(1,()=>{fx(L,{j:1});return pick(['友人の結婚式に出た。','友人に子どもが生まれたと聞いた。']);});
+  if(a>=35&&a<=75)add(1.2,()=>{if(L.m.h<55){fx(L,{h:1});return '健康診断で、数値に気をつけるよう言われた。';}return '健康診断は、おおむね問題なかった。';});
+  if(a>=19&&a<=69&&L.loc.inPref&&m.snow>=2)add(1.2,()=>{fx(L,{h:-1});return '朝、雪かきをしてから出かけた。';});
+  if(L.loc.abroad)add(2,()=>{const t=R()<.5;fx(L,t?{r:3,k:1}:{r:-2,j:-1});return t?pick(['現地の友人ができた。','休みの日に、近くの町を旅した。']):pick(['言葉の壁にぶつかった。','日本の家族と、時差のある電話をした。']);});
+  if(!L.loc.inPref&&!L.loc.abroad&&a>=18)add(1.6,()=>{fx(L,{r:-2,j:-1});return pick(['家賃と物価の高さに、あらためて驚いた。','知り合いの少ない街で、さびしさを感じた。','ふと、ふるさとの米の味が恋しくなった。']);});
+  if(L.job&&!L.retired&&!L.unemp&&a>=24)add(1,()=>{const t=R()<.5;fx(L,t?{j:2,k:1}:{j:-2,h:-1});return t?'仕事で任されることが増えた。':'仕事がたてこみ、疲れがたまった。';});
+  if(a>=70){if(L.m.r<40)add(2,()=>{fx(L,{j:-3});return '人と話さない日が続いた。';});else add(1.5,()=>{fx(L,{r:2,j:1});return '近所の人と、お茶を飲む時間が増えた。';});}
+  if(a>=70&&L.license)add(1,()=>{fx(L,{j:-1});return '運転中に、ひやりとすることがあった。';});
+  if(a>=65&&L.loc.inPref)add(1,()=>{fx(L,{j:2});return LAND[m.name]||LAND_REG[regionOf(m)];});
+  if(!pool.length)return;
+  const e=wpick(pool,x=>x.w);addLog(L,e.fn(),'');
+}
+function causeOf(L){
+  if(L.illness&&R()<0.7)return ILL[L.illness.type]==='そのほかの重い病気'?'病気':ILL[L.illness.type];
+  const a=L.deathAge;
+  let w;
+  if(a<1)w={'生まれつきの病気など':6,'不慮の事故':1};
+  else if(a<40)w={'不慮の事故':4,'がん':3,'心臓の病気':1.5,'そのほかの病気':2};
+  else if(a<75)w={'がん':45,'心臓の病気':17,'脳の病気':10,'肺炎':5,'不慮の事故':4,'そのほかの病気':19};
+  else w={'がん':Math.max(10,30-(a-75)),'心臓の病気':16,'脳の病気':8,'肺炎':9,'老衰':Math.min(40,6+(a-75)*1.6),'不慮の事故':2,'そのほかの病気':15};
+  return wpick(Object.keys(w),k=>w[k]);
+}
+function die(L,cause){
+  L.alive=false;L.deathAge=L.age;L.cause=cause||causeOf(L);
+  L.log.push({age:L.age,text:`${L.cause}で、${L.age}歳の人生を終えた。`,hot:true});
+  L.yearEv=[{text:`${L.cause}で亡くなった。`,hot:true}];
+  G.queue=[scene({kind:'death',title:`${L.age}歳で、人生を終えた`,body:`${MUNI[L.birth].name}で生まれた${L.name}さんの人生は、${L.age}歳で終わりました。死因は大まかに「${L.cause}」です。`,opts:[opt('人生をふりかえる',()=>{showEnd();return null;})]})];
+  G.ended=true;
+}
+
+/* ============ ほかの3人 ============ */
+function makeOther(mode){
+  const muni=drawMuni(mode);const sex=drawSex(mode);
+  let a=0;while(a<115&&R()>=hz(a,sex))a++;
+  const r=R();const path=r<0.42?'univ':r<0.62?'senmon':'job';
+  const out=path==='univ'?R()<.45:path==='senmon'?R()<.2:R()<.15;
+  const back=out&&R()<.35;
+  return {name:pick(SURN)+' '+pick(GIVEN[sex]),sex,muni:muni.i,death:a,path,out,back,married:R()<.7?ri(25,36):null,age:0,alive:true};
+}
+function otherStatus(o){
+  const a=o.age;
+  if(!o.alive)return `${o.death}歳で人生を終えた`;
+  if(a<6)return '未就学';if(a<12)return '小学生';if(a<15)return '中学生';if(a<18)return '高校生';
+  const end=o.path==='univ'?22:o.path==='senmon'?20:18;
+  if(a<end)return o.path==='univ'?`${o.out?'県外':'県内'}の大学生`:`${o.out?'県外':'県内'}の専門学校生`;
+  if(a<60)return `${o.out&&!(o.back&&a>=32)?'県外':'県内'}で働く${o.married&&a>=o.married?'(既婚)':''}`;
+  if(a<65)return '再雇用・定年前後';
+  return '退職後の暮らし';
+}
+function stepOther(o,a){if(!o.alive)return;if(a>o.death){o.alive=false;o.age=o.death;return;}o.age=a;}
+
+/* ============ 実績・記録 ============ */
+const ACH=[
+  ['hundred','百年','100歳を迎えた',L=>L.deathAge>=100],
+  ['long','長い道のり','90歳を迎えた',L=>L.deathAge>=90],
+  ['home','ふるさとの暮らし','一生を県内で暮らした',L=>!L.everOut],
+  ['back','ふるさとへ','県外から新潟に戻った',L=>L.returned],
+  ['snow','雪とともに','豪雪地帯で70歳を迎えた',L=>L.deathAge>=70&&(MUNI[L.birth].snow===3||muniOf(L).snow===3)&&L.loc.inPref],
+  ['disaster','乗り越えた災害','5回以上の災害を乗り越えた',L=>L.disasters>=5],
+  ['kids','にぎやかな家','3人以上の子どもを育てた',L=>L.kids.length>=3],
+  ['couple','連れ添う日々','結婚して40年以上',L=>L.marriedAt!=null&&L.married&&L.spouseAlive&&L.deathAge-L.marriedAt>=40||L.longCouple],
+  ['learn','学びつづける','知識が90を超えた',L=>L.maxK>=90],
+  ['people','人に囲まれて','人間関係が90を超えた',L=>L.maxR>=90],
+  ['abroad','海をこえて','海外で学ぶか、働いた',L=>!!L.everAbroad],
+  ['island','島に生まれて','佐渡市か粟島浦村に生まれた',L=>['佐渡市','粟島浦村'].includes(MUNI[L.birth].name)],
+  ['care','親を支えた','親の介護を担った',L=>L.cared]
+];
+const RKEY='n210-records-v1';
+function loadRec(){try{const s=localStorage.getItem(RKEY);if(s){const o=JSON.parse(s);o.lives=o.lives||[];o.ach=o.ach||{};o.zukan=o.zukan||{muni:{},cause:{},school:{}};return o;}}catch(e){}return {lives:[],ach:{},zukan:{muni:{},cause:{},school:{}}};}
+function saveRec(o){try{localStorage.setItem(RKEY,JSON.stringify(o));}catch(e){}}
+
+/* ============ 描画 ============ */
+const $=id=>document.getElementById(id);
+function show(id){['s-start','s-profile','s-play','s-end','s-rec'].forEach(s=>{$(s).hidden=s!==id;});if(!HEADLESS)window.scrollTo(0,0);}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function statHTML(list){if(!list||!list.length)return '';return '<div class="stats">'+list.map(s=>{const st=Array.isArray(s)?s:STAT[s];if(!st)return '';return `<div class="stat ${st[0]}"><i>${st[0]==='real'?'実データ':'ゲーム上の仮定'}</i><span>${esc(st[1])}</span></div>`;}).join('')+'</div>';}
+
+// 点の図
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const DOTS={};
+function dots(mode){
+  if(DOTS[mode])return DOTS[mode];
+  const rnd=mulberry(mode==='A'?7:11);const g=()=>{let u=0,v=0;while(!u)u=rnd();while(!v)v=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
+  const out=[];
+  for(const m of MUNI){const n=Math.max(1,Math.round(mode==='A'?m.births/5:m.pop/1000));
+    for(let k=0;k<n;k++){out.push({mi:m.i,lon:m.lon+g()*m.sx*0.85,lat:m.lat+g()*m.sy*0.85});}}
+  return DOTS[mode]=out;
+}
+function drawMap(cv,mode,hi){
+  if(!cv)return;
+  const w=cv.clientWidth||300;const h=w*1.02;const dpr=window.devicePixelRatio||1;
+  cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);
+  const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,w,h);
+  const x0=137.5,x1=139.95,y0=36.68,y1=38.62;const k=0.79;
+  const sc=Math.min((w-16)/((x1-x0)*k),(h-16)/(y1-y0));
+  const ox=(w-(x1-x0)*k*sc)/2,oy=(h-(y1-y0)*sc)/2;
+  const P=(lon,lat)=>[ox+(lon-x0)*k*sc,oy+(y1-lat)*sc];
+  const ds=dots(mode);const r=Math.max(1.3,w/300);
+  c.fillStyle=css('--dot');
+  for(const d of ds){if(d.mi===hi)continue;const [x,y]=P(d.lon,d.lat);c.fillRect(x-r/2,y-r/2,r,r);}
+  if(hi!=null){c.fillStyle=css('--accent');for(const d of ds){if(d.mi!==hi)continue;const [x,y]=P(d.lon,d.lat);c.beginPath();c.arc(x,y,r*0.95,0,7);c.fill();}
+    const m=MUNI[hi];const [x,y]=P(m.lon,m.lat);c.font=`700 ${Math.max(12,w/30)}px ${css('--f-body')}`;c.fillStyle=css('--fg');
+    const tw=c.measureText(m.name).width;let tx=x+12;if(tx+tw>w-4)tx=x-12-tw;c.fillText(m.name,tx,y-8);}
+}
+function mapCaption(mode,hi){
+  const unit=mode==='A'?'1点 ≒ 出生5人(令和5年の出生数より)':'1点 ≒ 1,000人(2025年の人口より)';
+  if(hi==null)return `${unit}。新潟県の人口は2,068,476人。`;
+  const m=MUNI[hi];const share=mode==='A'?m.births/10916:m.pop/POP_TOTAL;
+  return `${unit}。赤が${m.name}(人口${fmt(m.pop)}人、県の${(share*100).toFixed(share<0.01?2:1)}%)。`;
+}
+
+// スタート
+let START={mode:'A',len:1800,muni:null};let PROF=null;
+function renderStart(){
+  const mode=document.querySelector('input[name="mode"]:checked').value;START.mode=mode;
+  START.len=+document.querySelector('input[name="len"]:checked').value;
+  const v=$('sel-muni').value;START.muni=v===''?null:+v;
+  drawMap($('map-start'),mode,START.muni);$('map-start-cap').textContent=mapCaption(mode,START.muni);
+  $('start-stats').innerHTML=statHTML(mode==='A'?['births','sexA','aBirthsN','births25']:['pop','hh','aged','aSexB']).replace('<div class="stats">','').replace(/<\/div>$/,'');
+}
+function renderProfile(){
+  const P=PROF,m=MUNI[P.muni];const share=P.mode==='A'?m.births/10916:m.pop/POP_TOTAL;
+  const sibs=[P.bo>1?`年上のきょうだい${P.bo-1}人`:'',P.younger?`年下のきょうだい${P.younger}人`:''].filter(Boolean).join('・')||'ひとりっ子';
+  $('profile-body').innerHTML=`<p class="eyebrow">抽選の結果</p>
+  <h1 class="pname">${esc(P.name)}<small>${P.sex==='m'?'男性':'女性'} ・ ${BIRTH_YEAR}年生まれ</small></h1>
+  <dl class="facts">
+   <dt>出生地</dt><dd>${m.name} <small>人口${fmt(m.pop)}人・県の${(share*100).toFixed(share<.01?2:1)}%・${regionOf(m)}</small></dd>
+   <dt>大事にしていること</dt><dd>${P.vals.map(v=>VALUES[v]).join('、')}</dd>
+   <dt>性格タイプ</dt><dd>${P.type}型(${P.type.split('').map(c=>TYPEJ[c]).join('・')}) <small>ゲーム内の目安であり診断ではありません</small></dd>
+   <dt>世帯年収</dt><dd>全国の上から${P.pct}%</dd>
+   <dt>家族</dt><dd>${P.single?'ひとり親の家庭':'ふたり親の家庭'} ・ 第${P.bo}子 <small>(${sibs})</small></dd>
+   <dt>親の職種</dt><dd>${esc(P.pjob||'—')}${P.intl?' <small>海外とのつながりがある</small>':''}</dd>
+   <dt>親の学歴</dt><dd>${PEDU[P.pedu]}</dd>
+   <dt>住まい</dt><dd>${HOME[P.home]}</dd>
+   <dt>生まれた環境</dt><dd>${(()=>{const e=envRate(P);return `<span class="env">${starsHTML(e.lv)}<b>${e.lv} ${e.label}</b></span><ul class="envlist">${e.parts.map(p=>`<li><span>${p[0]}</span><b>${p[1]>0?'+':''}${p[1].toFixed(1)}</b></li>`).join('')}</ul>`;})()}</dd>
+   <dt>学力の偏差値</dt><dd>${P.dev.toFixed(1)} <small>ゲーム上の仮定(平均50)</small></dd>
+  </dl>${statHTML([P.mode==='A'?'sexA':'aSexB','births','aIncome','aFamily','aJob','aEnv','aDev'])}`;
+  drawMap($('map-profile'),P.mode,P.muni);$('map-profile-cap').textContent=mapCaption(P.mode,P.muni);
+}
+
+// プレイ
+function begin(P,lenSec){
+  const L=makeLife(P);
+  G={L,lenSec,speed:1,paused:false,auto:false,acc:0,queue:[],ended:false,autoAt:0,others:[0,1,2].map(()=>makeOther(P.mode)),prefDis:{quake:0,flood:0,snow:0,slide:0,fire:0},word:null};
+  const m=MUNI[L.birth];
+  addLog(L,`${m.name}で生まれた。${P.single?'ひとり親の家庭':'ふたり親の家庭'}の第${P.bo}子。`,'home',true);
+  return G;
+}
+function choose(i){
+  if(!G||!G.queue.length)return;
+  const s=G.queue.shift();const o=s.opts[i];if(!o)return;
+  G.autoAt=0;
+  const res=o.fn?o.fn(G.L):null;
+  if(s.kind==='choice'&&res&&res.text){addLog(G.L,res.text,'',!!res.hot);}
+  if(res&&res.next)G.queue.unshift(...res.next);
+  if(!HEADLESS&&s.kind!=='death')renderPlay();
+}
+function autoIndex(s){
+  const L=G.L;const ws=s.opts.map(o=>o.w*(1+2*o.v.filter(v=>L.P.vals.includes(v)).length));
+  let t=ws.reduce((a,b)=>a+b,0),r=R()*t;for(let i=0;i<ws.length;i++){r-=ws[i];if(r<=0)return i;}return 0;
+}
+function renderPlay(){
+  if(HEADLESS||!G)return;const L=G.L;const m=MUNI[L.birth];
+  $('ph').innerHTML=`<span class="who">${esc(L.name)}</span><span class="meta">${m.name}生まれ ・ ${L.sex==='m'?'男性':'女性'} ・ ${BIRTH_YEAR}年生まれ</span><span class="meta">生まれた環境 ${starsHTML(envRate(L.P).lv)}</span><span class="status">${esc(statusOf(L))}</span><span class="yr num">${BIRTH_YEAR+L.age}年(想定)</span>`;
+  // 場面
+  const sc=$('scene');const s=G.queue[0];
+  if(s){
+    sc.className='scene stop';
+    sc.innerHTML=`<span class="stopflag">時間が止まっています</span><div class="age num">${L.age}<small>歳</small></div><h2>${esc(s.title)}</h2><p class="body">${esc(s.body)}</p>
+      <div class="opts">${s.opts.map((o,i)=>`<button class="opt" type="button" data-i="${i}"><span>${esc(o.label)}</span>${o.note?`<small class="${/むずかしい/.test(o.note)?'hard':''}">${esc(o.note)}</small>`:''}</button>`).join('')}</div>
+      ${G.auto&&s.kind!=='death'?'<div class="autobar" id="autobar"></div>':''}${statHTML(s.stats)}`;
+    sc.querySelectorAll('.opt').forEach(b=>b.onclick=()=>choose(+b.dataset.i));
+    if(G.auto&&s.kind!=='death'){const ab=$('autobar');requestAnimationFrame(()=>{if(ab)ab.style.width='100%';});}
+  } else {
+    sc.className='scene';
+    sc.innerHTML=`<div class="age num">${L.age}<small>歳</small></div><ul class="evs">${L.yearEv.map(e=>`<li class="${e.hot?'hot':''}">${esc(e.text)}</li>`).join('')}</ul>${statHTML(L.yearStats)}`;
+  }
+  // 家族
+  const fam=[];
+  L.parents.forEach(p=>fam.push(`<span class="chip ${p.alive?'':'gone'}">${p.role} ${p.alive?p.age+'歳':'(亡)'}</span>`));
+  if(L.sibOlder||L.sibYounger)fam.push(`<span class="chip">きょうだい ${[L.sibOlder?`年上${L.sibOlder}人`:'',L.sibYounger?`年下${L.sibYounger}人`:''].filter(Boolean).join('・')}</span>`);
+  if(L.married)fam.push(`<span class="chip ${L.spouseAlive?'':'gone'}">連れ合い ${L.spouseAlive?L.spouseAge+'歳':'(亡)'}</span>`);
+  L.kids.forEach((k,i)=>fam.push(`<span class="chip ${k.alive?'':'gone'}">${k.sex==='m'?'息子':'娘'} ${k.alive?(L.age-k.born)+'歳':'(亡)'}</span>`));
+  const homeLab=L.ownHouse?'持ち家':(L.school&&L.loc.muni!==L.birth)?'寮・ひとり暮らし':L.home==='family'?'実家':'借家';
+  fam.push(`<span class="chip">住まい: ${esc(L.loc.label)}(${L.loc.abroad?'海外':L.loc.inPref?'県内':'県外'})・${homeLab}</span>`);
+  $('family').innerHTML=`<div class="chips">${fam.join('')}</div>`;
+  // 重点
+  const fl=focusList(L);
+  $('focus').innerHTML=fl.length?fl.map(f=>`<button type="button" data-k="${f[0]}" aria-pressed="${L.focus===f[0]}"><b>${f[1]}</b><span>${arrows(f)}</span></button>`).join(''):'<p class="small muted">まだ小さいので、毎日の過ごし方は家族が決めています。6歳から選べます。</p>';
+  $('focus').querySelectorAll('button').forEach(b=>b.onclick=()=>{L.focus=b.dataset.k;renderPlay();});
+  // お金
+  const nw=netWorth(L);
+  $('assets').innerHTML=assetsHTML(L);
+  $('income').innerHTML=incomeHTML(L);
+  // メーター
+  $('meters').innerHTML=['h','j','k','r'].map(k=>{const v=Math.round(L.m[k]);return `<div class="meter ${v<30?'low':''}"><span>${MNAME[k]}</span><div class="bar"><i style="width:${v}%"></i></div><span class="v">${v}</span></div>`;}).join('');
+  // 速度
+  $('speed').innerHTML=`<button type="button" id="b-pause" aria-pressed="${G.paused}">${G.paused?'再開':'一時停止'}</button>`+[1,2,4,8,16].map(x=>`<button type="button" data-x="${x}" aria-pressed="${G.speed===x}">${x}倍</button>`).join('')+`<label><input type="checkbox" id="b-auto" ${G.auto?'checked':''}>おまかせ</label>`;
+  $('b-pause').onclick=()=>{G.paused=!G.paused;renderPlay();};
+  $('speed').querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{G.speed=+b.dataset.x;renderPlay();});
+  $('b-auto').onchange=e=>{G.auto=e.target.checked;G.autoAt=0;renderPlay();};
+  $('lifemap').innerHTML=lifeMapSVG(L);
+  $('survival').innerHTML=survivalSVG(L);
+  $('others').innerHTML=G.others.map(o=>`<div class="other ${o.alive?'':'dead'}"><b>${esc(o.name)}</b><span class="num small">${o.alive?o.age+'歳':''}</span><span class="st">${MUNI[o.muni].name}生まれ・${o.sex==='m'?'男性':'女性'} ・ ${otherStatus(o)}</span></div>`).join('');
+  $('log').innerHTML=L.log.slice(-120).reverse().map(e=>`<div class="${e.hot?'hot':''}"><em>${e.age}歳</em><span>${esc(e.text)}</span></div>`).join('');
+}
+function assetsHTML(L){
+  const sv=L.savings,nw=netWorth(L);
+  return `<b class="num ${sv<0?'neg':''}">${fmt(sv)}</b><span class="tiny muted">${sv<0?'貯金より借りたお金(奨学金など)が多い状態':'預貯金など(住まいの価値はふくめない)'}</span>
+   <dl><dt>住宅ローンの残り</dt><dd>${L.loan>0?'−'+fmt(L.loan):'なし'}</dd><dt>差し引き(純資産)</dt><dd>${fmt(nw)}</dd><dt>今年の増減</dt><dd>${L.netFlow==null||L.age<15?'—':(L.netFlow>=0?'+':'')+fmt(L.netFlow)}</dd></dl>`;
+}
+function incomeHTML(L){
+  const st=stageOf(L);const pen=L.incPension||0;const work=Math.max(0,L.income-pen);
+  let note=L.age<15?'まだ働いていません':st==='student'?'学生(アルバイトなど)':L.unemp?'求職中(失業給付などの目安)':st==='senior'?'退職後':'賃金統計からの試算';
+  return `<b class="num">${fmt(L.income)}</b><span class="tiny muted">${note}</span>
+   <dl><dt>働いて得た分</dt><dd>${fmt(work)}</dd><dt>年金</dt><dd>${pen?fmt(pen):'—'}</dd><dt>これまでの最高</dt><dd>${L.maxIncome?fmt(L.maxIncome)+'('+L.maxIncomeAge+'歳)':'—'}</dd></dl>`;
+}
+function lifeMapSVG(L,full){
+  const end=L.alive?Math.max(90,L.age+5):Math.max(L.deathAge+2,60);const X=Math.min(112,end);
+  const x0=58,x1=352;const sx=a=>x0+(a/X)*(x1-x0);const rows=['住まい','学び・仕事','家族','健康','災害'];const ry=i=>14+i*22;
+  const cur=L.alive?L.age:L.deathAge;
+  let s=`<svg viewBox="0 0 360 132" role="img" aria-label="人生地図">`;
+  rows.forEach((r,i)=>{s+=`<text x="0" y="${ry(i)+4}" style="fill:var(--muted);font-size:10px">${r}</text><line x1="${x0}" x2="${x1}" y1="${ry(i)}" y2="${ry(i)}" style="stroke:var(--line)"/>`;});
+  const locC={home:'var(--sea)',pref:'var(--dot)',out:'var(--assume)',abroad:'var(--accent)'};
+  L.locHist.forEach((h,i)=>{const e=i+1<L.locHist.length?L.locHist[i+1].age:cur;if(e<=h.age&&i+1<L.locHist.length)return;s+=`<rect x="${sx(h.age)}" y="${ry(0)-4}" width="${Math.max(1.5,sx(Math.max(e,h.age+0.5))-sx(h.age))}" height="8" rx="2" style="fill:${locC[h.kind]}"/>`;});
+  const roleC={child:'var(--sunk)',school:'var(--sea-soft)',work:'var(--sea)',retired:'var(--dot)'};
+  L.roleHist.forEach((h,i)=>{const e=i+1<L.roleHist.length?L.roleHist[i+1].age:cur;if(e<=h.age&&i+1<L.roleHist.length)return;s+=`<rect x="${sx(h.age)}" y="${ry(1)-4}" width="${Math.max(1.5,sx(Math.max(e,h.age+0.5))-sx(h.age))}" height="8" rx="2" style="fill:${roleC[h.kind]};stroke:var(--line);stroke-width:.5"/>`;});
+  L.marks.forEach(mk=>{if(mk.row<2)return;s+=`<circle cx="${sx(mk.age)}" cy="${ry(mk.row)}" r="3.4" style="fill:${mk.row===4?'var(--accent)':mk.row===3?'var(--assume)':'var(--sea)'}"><title>${mk.age}歳 ${esc(mk.label)}</title></circle>`;});
+  s+=`<line x1="${sx(cur)}" x2="${sx(cur)}" y1="4" y2="${ry(4)+8}" style="stroke:var(--accent);stroke-width:1.2"/>`;
+  [0,20,40,60,80,100].filter(a=>a<=X).forEach(a=>{s+=`<text x="${sx(a)}" y="128" text-anchor="middle" style="fill:var(--muted);font-size:9px">${a}</text>`;});
+  s+='</svg>';
+  s+=`<p class="tiny muted" style="margin-top:4px">住まい: <span style="color:var(--sea)">■</span>ふるさと <span style="color:var(--dot)">■</span>県内のほかの町 <span style="color:var(--assume)">■</span>県外 <span style="color:var(--accent)">■</span>海外 ・ 学び・仕事: 薄い色が学校、濃い色が仕事</p>`;
+  return s;
+}
+function survivalSVG(L){
+  const lx=LX[L.sex];const x0=34,x1=352,y0=10,y1=118;const A=110;
+  const sx=a=>x0+a/A*(x1-x0),sy=v=>y1-(v/100000)*(y1-y0);
+  let pts='';for(let a=0;a<=A;a++)pts+=`${sx(a).toFixed(1)},${sy(lx[a]).toFixed(1)} `;
+  const cur=L.alive?L.age:L.deathAge;const n=lx[Math.min(cur,119)];
+  let s=`<svg viewBox="0 0 360 140" role="img" aria-label="生存曲線">`;
+  [0,50000,100000].forEach(v=>{s+=`<line x1="${x0}" x2="${x1}" y1="${sy(v)}" y2="${sy(v)}" style="stroke:var(--line)"/><text x="${x0-4}" y="${sy(v)+3}" text-anchor="end" style="fill:var(--muted);font-size:9px">${v/10000}万</text>`;});
+  [0,20,40,60,80,100].forEach(a=>{s+=`<text x="${sx(a)}" y="132" text-anchor="middle" style="fill:var(--muted);font-size:9px">${a}歳</text>`;});
+  s+=`<polygon points="${sx(0)},${sy(0)} ${pts} ${sx(A)},${sy(0)}" style="fill:var(--sea-soft)"/><polyline points="${pts}" style="fill:none;stroke:var(--sea);stroke-width:1.6"/>`;
+  s+=`<line x1="${sx(cur)}" x2="${sx(cur)}" y1="${y0}" y2="${y1}" style="stroke:var(--accent);stroke-dasharray:3 3"/><circle cx="${sx(cur)}" cy="${sy(n)}" r="4" style="fill:var(--accent)"/>`;
+  s+='</svg>';
+  s+=`<p class="small" style="margin-top:4px">同じ性別で生まれた10万人のうち、いま${cur}歳まで生きている人は約<b class="num">${fmt(n)}</b>人。</p>`;
+  return s;
+}
+
+// 終了
+function achieved(L){
+  if(L.marriedAt!=null&&!L.divorced&&L.spouseAlive&&L.deathAge-L.marriedAt>=40)L.longCouple=true;
+  return ACH.filter(a=>{try{return a[3](L);}catch(e){return false;}}).map(a=>a[0]);
+}
+function resultText(L){
+  const m=MUNI[L.birth];
+  return `210万分の1 ― ${m.name}で${BIRTH_YEAR}年に生まれた${L.name}さん(${L.sex==='m'?'男性':'女性'})は、${L.deathAge}歳で人生を終えました(死因の分類: ${L.cause})。`+
+   `${L.hsName?`高校は${L.hsName}。`:''}${L.everOut?'県外で暮らした時期があった。':'一生を新潟県内で暮らした。'}${L.married||L.divorced?'結婚を経験し、':''}${L.kids.length?`子どもは${L.kids.length}人。`:''}災害に${L.disasters}回あった。生まれた環境は5段階の${envRate(L.P).lv}。最後の総資産は約${fmt(L.savings)}万円、いちばん多かった年収は約${fmt(L.maxIncome||0)}万円。`+
+   `\n※数字は公的統計と仮定を組み合わせた試算で、個人の将来の予測ではありません。`;
+}
+function showEnd(){
+  const L=G.L;const m=MUNI[L.birth];const ach=achieved(L);
+  // 記録
+  const rec=loadRec();
+  rec.lives.unshift({d:new Date().toISOString().slice(0,10),name:L.name,muni:m.name,sex:L.sex,age:L.deathAge,cause:L.cause,hs:L.hsName||'',ach,env:envRate(L.P).lv,assets:Math.round(L.savings),maxInc:Math.round(L.maxIncome||0)});
+  rec.lives=rec.lives.slice(0,10);
+  ach.forEach(a=>rec.ach[a]=(rec.ach[a]||0)+1);
+  rec.zukan.muni[m.name]=1;rec.zukan.cause[L.cause]=1;if(L.hsName)rec.zukan.school[L.hsName]=1;
+  saveRec(rec);G.recIdx=0;
+  const e0=E0[L.sex];
+  const used=[...L.stats];
+  const el=$('s-end');
+  el.innerHTML=`<div class="endhead"><p class="eyebrow">${m.name} ・ ${BIRTH_YEAR}年 〜 ${BIRTH_YEAR+L.deathAge}年(想定)</p>
+   <h1>${esc(L.name)}さんは、<em>${L.deathAge}歳</em>で人生を終えました。</h1>
+   <p class="muted" style="margin-top:10px">死因の分類: ${esc(L.cause)} ・ ${L.sex==='m'?'男性':'女性'}の平均余命は${e0}年(令和7年簡易生命表)。同じ性別で生まれた10万人のうち、${L.deathAge}歳まで生きるのは約${fmt(LX[L.sex][L.deathAge])}人です。</p></div>
+  <div class="endgrid">
+   <div class="col">
+    <div class="panel"><h2 class="section-title">最後にこの人へ声をかけるなら</h2><div class="words" id="words">${['おつかれさま','ありがとう','いい人生だったね','またどこかで'].map(w=>`<button type="button" aria-pressed="false">${w}</button>`).join('')}</div><p class="small muted" id="word-msg" style="margin-top:8px"></p></div>
+    <div class="panel"><h2 class="section-title">最後の状態</h2>
+      <div class="meters">${['h','j','k','r'].map(k=>{const v=Math.round(L.m[k]);return `<div class="meter ${v<30?'low':''}"><span>${MNAME[k]}</span><div class="bar"><i style="width:${v}%"></i></div><span class="v">${v}</span></div>`;}).join('')}</div>
+      <div class="money" style="margin-top:12px"><div class="panel"><div class="label">総資産<span>万円</span></div><div class="mbox">${assetsHTML(L)}</div></div><div class="panel"><div class="label">最後の年の年収<span>万円・額面</span></div><div class="mbox">${incomeHTML(L)}</div></div></div>
+      <p class="small" style="margin-top:10px">生まれた環境 ${starsHTML(envRate(L.P).lv)} ${envRate(L.P).label} ・ 最後の住まい ${esc(L.loc.label)}(${L.loc.abroad?'海外':L.loc.inPref?'県内':'県外'}) ・ ${L.married&&L.spouseAlive?'連れ合いがいた':L.married?'連れ合いに先立たれていた':L.divorced?'離婚を経験':'結婚はしなかった'} ・ 子ども${L.kids.length}人 ・ 災害${L.disasters}回</p></div>
+    <div class="panel"><h2 class="section-title">人生地図</h2>${lifeMapSVG(L,true)}</div>
+    <div class="panel"><h2 class="section-title">人生の転機</h2><ul class="turns">${L.turns.length?L.turns.map(t=>`<li><em>${t.age}歳</em><span>${esc(t.text)}</span></li>`).join(''):'<li><em></em><span>大きな分かれ道を迎える前でした。</span></li>'}</ul></div>
+   </div>
+   <div class="col">
+    <figure class="mapfig"><canvas id="map-end" width="600" height="612" aria-label="生まれた場所"></canvas><figcaption>${mapCaption(L.P.mode,L.birth)}</figcaption></figure>
+    <div class="panel"><h2 class="section-title">同じ日に生まれたほかの3人</h2><div class="others">${G.others.map(o=>`<div class="other"><b>${esc(o.name)}</b><span class="num small">${o.death}歳</span><span class="st">${MUNI[o.muni].name}生まれ・${o.sex==='m'?'男性':'女性'} ・ ${o.death}歳で人生を終えた${o.death>L.deathAge?`(${L.name.split(' ')[1]}さんの最期のときは存命)`:''}</span></div>`).join('')}</div></div>
+    <div class="panel"><h2 class="section-title">実績</h2><div class="achs">${ACH.map(a=>`<div class="ach ${ach.includes(a[0])?'on':'off'}"><b>${a[1]}</b>${a[2]}</div>`).join('')}</div></div>
+    <div class="panel"><h2 class="section-title">結果の文章</h2><textarea class="copybox" id="copytext" readonly>${esc(resultText(L))}</textarea><div class="row" style="margin-top:8px"><button class="btn" type="button" id="b-copy">コピーする</button><span class="small muted" id="copy-msg"></span></div></div>
+   </div>
+  </div>
+  <div class="panel" style="margin-top:28px"><h2 class="section-title">この人生で使われた統計</h2>${statHTML([...used.filter(s=>STAT[s]&&STAT[s][0]==='real'),...used.filter(s=>STAT[s]&&STAT[s][0]==='assume'),'aAch'])}
+   <p class="small" style="margin-top:12px"><b>数字は公的統計と仮定を組み合わせた試算で、個人の将来の予測ではありません。</b></p></div>
+  <div class="row" style="margin-top:24px"><button class="btn primary" type="button" id="b-again">もう一度生まれる</button><button class="btn" type="button" id="b-rec2">記録を見る</button></div>`;
+  show('s-end');
+  drawMap($('map-end'),L.P.mode,L.birth);
+  el.querySelectorAll('#words button').forEach(b=>b.onclick=()=>{el.querySelectorAll('#words button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');$('word-msg').textContent=`「${b.textContent}」と声をかけました。`;const r=loadRec();if(r.lives[0])r.lives[0].word=b.textContent;saveRec(r);});
+  $('b-copy').onclick=()=>{const t=$('copytext');const ok=()=>{$('copy-msg').textContent='コピーしました。';};const ng=()=>{t.focus();t.select();$('copy-msg').textContent='選択しました。手動でコピーしてください。';};
+    try{navigator.clipboard.writeText(t.value).then(ok,ng);}catch(e){ng();}};
+  $('b-again').onclick=()=>{show('s-start');renderStart();};
+  $('b-rec2').onclick=showRec;
+}
+function showRec(){
+  const r=loadRec();
+  $('s-rec').innerHTML=`<p class="eyebrow">記録</p><h1 style="font-size:32px;margin-top:6px">これまでの人生</h1>
+  <p class="small muted" style="margin-top:8px">記録はこのブラウザにだけ残ります。ほかの端末や、ほかの人には送られません。</p>
+  <div class="panel" style="margin-top:20px"><h2 class="section-title">直近10回の人生</h2>${r.lives.length?`<div class="tablewrap"><table class="rec"><thead><tr><th>日付</th><th>名前</th><th>出生地</th><th>環境</th><th>年齢</th><th>総資産</th><th>最高年収</th><th>死因の分類</th><th>ひとこと</th></tr></thead><tbody>${r.lives.map(l=>`<tr><td class="num">${esc(l.d)}</td><td>${esc(l.name)}</td><td>${esc(l.muni)}</td><td>${l.env?starsHTML(l.env):'—'}</td><td class="num">${l.age}歳</td><td class="num">${l.assets!=null?fmt(l.assets)+'万円':'—'}</td><td class="num">${l.maxInc?fmt(l.maxInc)+'万円':'—'}</td><td>${esc(l.cause)}</td><td>${esc(l.word||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted">まだ記録がありません。最初の人生を終えると、ここに残ります。</p>'}</div>
+  <div class="panel" style="margin-top:24px"><h2 class="section-title">実績</h2><div class="achs">${ACH.map(a=>`<div class="ach ${r.ach[a[0]]?'on':'off'}"><b>${a[1]}</b>${a[2]}${r.ach[a[0]]?` ・ ${r.ach[a[0]]}回`:''}</div>`).join('')}</div></div>
+  <div class="panel" style="margin-top:24px"><h2 class="section-title">図鑑</h2>
+   <p class="small" style="margin-bottom:6px">生まれた市町村(${Object.keys(r.zukan.muni).length}/${MUNI.length})</p><div class="zukan">${MUNI.map(m=>`<span class="${r.zukan.muni[m.name]?'on':''}">${m.name}</span>`).join('')}</div>
+   <p class="small" style="margin:14px 0 6px">通った高校(${Object.keys(r.zukan.school).length}/${HS.length})</p><div class="zukan">${HS.map(h=>`<span class="${r.zukan.school[h.name]?'on':''}">${h.name}</span>`).join('')}</div>
+   <p class="small" style="margin:14px 0 6px">見届けた最期</p><div class="zukan">${['がん','心臓の病気','脳の病気','肺炎','老衰','不慮の事故','災害の影響','病気','そのほかの病気','生まれつきの病気など'].map(c=>`<span class="${r.zukan.cause[c]?'on':''}">${c}</span>`).join('')}</div></div>
+  <div class="row" style="margin-top:24px"><button class="btn primary" type="button" id="b-rec-back">${G&&!G.ended?'人生にもどる':'はじめから'}</button><button class="btn" type="button" id="b-rec-clear">記録を消す</button><span class="small muted" id="rec-msg"></span></div>`;
+  show('s-rec');
+  $('b-rec-back').onclick=()=>{if(G&&!G.ended){G.paused=G._wasPaused||false;show('s-play');renderPlay();}else{show('s-start');renderStart();}};
+  let armed=false;
+  $('b-rec-clear').onclick=e=>{if(!armed){armed=true;e.target.textContent='もう一度押すと消えます';return;}try{localStorage.removeItem(RKEY);}catch(x){}showRec();$('rec-msg').textContent='記録を消しました。';};
+}
+
+/* ============ 起動 ============ */
+let timer=null;
+function tick(){
+  if(!G||G.paused)return;
+  if(G.queue.length){
+    const s=G.queue[0];
+    if(G.auto&&s.kind!=='death'){if(!G.autoAt)G.autoAt=Date.now()+1400;else if(Date.now()>=G.autoAt){G.autoAt=0;choose(autoIndex(s));}}
+    return;
+  }
+  if(G.ended)return;
+  const spy=G.lenSec/85;G.acc+=0.1*G.speed;
+  if(G.acc>=spy){G.acc=0;stepYear();renderPlay();}
+  const p=$('prog');if(p)p.style.width=Math.min(100,G.acc/spy*100)+'%';
+}
+function boot(){
+  const sel=$('sel-muni');
+  MUNI.forEach(m=>{const o=document.createElement('option');o.value=m.i;o.textContent=`${m.name}(${regionOf(m)})`;sel.appendChild(o);});
+  document.querySelectorAll('input[name="mode"],input[name="len"]').forEach(x=>x.onchange=renderStart);
+  sel.onchange=renderStart;
+  $('btn-born').onclick=()=>{renderStart();PROF=newProfile(START.mode,START.muni);renderProfile();show('s-profile');};
+  $('btn-reroll').onclick=()=>{PROF=newProfile(START.mode,START.muni);renderProfile();};
+  $('btn-back').onclick=()=>{show('s-start');renderStart();};
+  $('btn-begin').onclick=()=>{begin(PROF,START.len);show('s-play');renderPlay();};
+  $('nav-start').onclick=()=>{G=null;show('s-start');renderStart();};
+  $('nav-rec').onclick=()=>{if(G&&!G.ended){G._wasPaused=G.paused;G.paused=true;}showRec();};
+  renderStart();
+  let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(!$('s-start').hidden)renderStart();if(!$('s-profile').hidden&&PROF)drawMap($('map-profile'),PROF.mode,PROF.muni);if(!$('s-end').hidden&&G)drawMap($('map-end'),G.L.P.mode,G.L.birth);},150);});
+  try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(!$('s-start').hidden)renderStart();});}catch(e){}
+  timer=setInterval(tick,100);
+}
+if(globalThis.__EXPOSE__){
+  Object.assign(globalThis.__EXPOSE__,{MUNI,HS,UNI_IN,UNI_OUT,LX,E0,hz,newProfile,begin,stepYear,choose,autoIndex,makeOther,achieved,statusOf,regionOf,
+    get G(){return G;}});
+} else boot();
+})();
+</script>
