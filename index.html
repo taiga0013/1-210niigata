@@ -566,6 +566,8 @@ const STAT={
   aCompany:['assume','就職先の企業名は、新潟県内や全国・海外に実在する企業の名前と所在地を例として使っています。ゲーム内の年収・転勤・失業などは賃金統計と仮定から計算したもので、その企業の実際の給与や出来事とは関係ありません。県外の中小企業は業種だけを示しています。'],
   disOut:['real','県外・海外の出来事の頻度は、その地域で1990〜2025年の36年間に起きた大きな災害・暴動・テロなどのうち、公的機関の資料や主要な報道で広く記録されているものの件数(下限)を、年あたりに直したものです。'],
   aDisOut:['assume','県外・海外で一人がその出来事に巻き込まれる割合(0.18×種類ごとの係数。暑さ・煙害は1.5、暴動0.7、テロ0.3など)と、被害の大きさ・影響はゲーム上の仮定です。新潟県外の国内は8つの地域に分けています。'],
+  aFac:['assume','学部・学科の名前は各大学の実在のものですが、このゲームでは大学に合格したあとで選ぶ形にしています(実際は学部ごとに入試があります)。県外の大学は学部まで、海外の大学は専攻の分野だけです。医・歯・薬は6年制としています。'],
+  aPro:['assume','プロ・実業団に声がかかる見込み(競技の力から15〜70%)、年俸の幅(400万〜3,000万円)、現役を続ける年数はゲーム上の仮定です。チーム・所属先の名前は実在のものですが、年俸や出来事はそのチームの実際とは関係ありません。'],
   aAch:['assume','実績の中身はゲーム上の決まりです。'],
   aSport:['assume','スポーツ推薦は、運動や部活を重点にした年数・運動部・好きなこと・健康から出す「競技の力」で声がかかる仮定です。推薦先の学校は候補からの抽選で、実際の推薦枠を示すものではありません。高校は合格しやすさ90%、大学は50〜90%としています。'],
   snowex:['real','令和2年度の大雪では県内で死者21人、死傷者364人。屋根の雪下ろし中の事故が多くを占めました。']
@@ -680,7 +682,7 @@ function statusOf(L){
   if(a<12)return `小学${a-5}年生`; if(a<15)return `中学${a-11}年生${L.clubName?'・'+L.clubName:''}`;
   if(L.school){
     if(L.school.type==='hs')return `${L.school.name} ${Math.min(3,a-14)}年生${L.clubName?'・'+L.clubName:''}`;
-    if(L.school.type==='univ')return `${L.school.name}の学生`;
+    if(L.school.type==='univ')return `${L.school.name}${L.faculty?' '+L.faculty:''}の学生`;
     return `専門学校生(${L.school.inPref?'県内':'県外'})`;
   }
   if(L.roninNow)return `浪人生(${L.ronin}年目)`;
@@ -727,12 +729,13 @@ function arrows(f){const out=[];for(const k in f[2]){if(f[2][k]>0)out.push(MNAME
 function wageBase(L){
   const a=L.age; let row=WAGE[0];
   for(const w of WAGE)if(a>=w[0])row=w;
+  if(L.job&&L.job.size==='pro')return L.job.salary;
   let hs=row[1],un=row[2];
   let mon=L.edu==='univ'?un:L.edu==='senmon'?hs+0.35*(un-hs):hs;
   if(a<20)mon*=0.92;
   let y=mon*14.5/10;
   if(L.sex==='f')y*=0.82;
-  if(L.job)y*=L.job.size==='x'?1.35:L.job.size==='l'?1.18:L.job.size==='p'?1.0:0.88;
+  if(L.job)y*=L.job.size==='doc'?1.7:L.job.size==='x'?1.35:L.job.size==='l'?1.18:L.job.size==='p'?1.0:0.88;
   y*=1+Math.min(0.2,L.career*0.012);
   return y;
 }
@@ -896,6 +899,7 @@ function pathScene(L){
     job18Opt(L,true,'県内で就職',['money','local','family'],wj),
     ...(abroadOK(L,'uni')?[opt('海外の大学',()=>({next:[abroadUniScene(L)]}),['free','learn','work'],L.school&&L.school.abroad?'海外の高校から':'',L.school&&L.school.abroad?2.5:0.6)]:[]),
     job18Opt(L,false,'県外で就職',['money','free','work'],wj*0.35),
+    ...(proOK(L)?[proOpt(L,'hs')]:[]),
     ...(sportScore(L)>=7?[opt(`スポーツ推薦(${sportName(L)})で大学へ`,()=>({next:[sportUniScene(L)]}),['health','love'],'推薦の話が来ている',1.5)]:[])
   ]});
 }
@@ -954,6 +958,128 @@ function abroadUniScene(L){
   opts.push(opt('進路を選び直す',()=>({next:[L.roninNow?roninScene(L):pathScene(L)]}),[],'',0.05));
   return scene({title:'海外の大学を選ぶ',body:`語学の試験と書類で選考されます。いまの自分の力は、目安でおおよそ${my.toFixed(1)}です。`,stats:['aAbroad'],opts});
 }
+/* ---------- 大学の学部・学科 ----------
+   [学部, 学科(なければnull), 分野]。分野: hum 人文 / edu 教育 / law 法 / econ 経済・経営 / sci 理 / eng 工・情報 / med 医 / dent 歯 / nurse 看護・保健 / pharm 薬 / agri 農 / sport 体育・スポーツ / intl 国際 / soc 社会 / art 芸術 */
+const FAC={
+  '新潟大学':[['人文学部',['人文学科'],'hum'],['教育学部',['学校教員養成課程'],'edu'],['法学部',['法学科'],'law'],['経済科学部',['総合経済学科'],'econ'],['理学部',['理学科'],'sci'],['工学部',['工学科'],'eng'],['農学部',['農学科'],'agri'],['医学部',['医学科','保健学科'],'med'],['歯学部',['歯学科','口腔生命福祉学科'],'dent'],['創生学部',['創生学修課程'],'soc']],
+  '新潟県立大学':[['国際地域学部',['国際地域学科'],'intl'],['国際経済学部',['国際経済学科'],'econ'],['人間生活学部',['子ども学科','健康栄養学科'],'soc']],
+  '長岡技術科学大学':[['工学部',null,'eng']],
+  '三条市立大学':[['工学部',['技術・経営工学科'],'eng']],
+  '東京大学':[['文科一類(のちに法学部など)',null,'law'],['文科二類(のちに経済学部など)',null,'econ'],['文科三類(のちに文学部など)',null,'hum'],['理科一類(のちに工学部・理学部など)',null,'eng'],['理科二類(のちに農学部・薬学部など)',null,'sci'],['理科三類(のちに医学部)',null,'med']],
+  '早稲田大学':[['政治経済学部',null,'econ'],['法学部',null,'law'],['商学部',null,'econ'],['教育学部',null,'edu'],['文学部',null,'hum'],['基幹理工学部',null,'eng'],['社会科学部',null,'soc'],['スポーツ科学部',null,'sport']],
+  '慶應義塾大学':[['法学部',null,'law'],['経済学部',null,'econ'],['商学部',null,'econ'],['文学部',null,'hum'],['理工学部',null,'eng'],['医学部',null,'med'],['総合政策学部',null,'soc'],['環境情報学部',null,'eng']],
+  '明治大学':[['法学部',null,'law'],['商学部',null,'econ'],['政治経済学部',null,'econ'],['文学部',null,'hum'],['理工学部',null,'eng'],['農学部',null,'agri'],['経営学部',null,'econ'],['情報コミュニケーション学部',null,'soc']],
+  '横浜国立大学':[['教育学部',null,'edu'],['経済学部',null,'econ'],['経営学部',null,'econ'],['理工学部',null,'eng'],['都市科学部',null,'soc']],
+  '千葉大学':[['文学部',null,'hum'],['法政経学部',null,'law'],['教育学部',null,'edu'],['理学部',null,'sci'],['工学部',null,'eng'],['園芸学部',null,'agri'],['医学部',null,'med'],['薬学部',null,'pharm'],['看護学部',null,'nurse']],
+  '中央大学':[['法学部',null,'law'],['経済学部',null,'econ'],['商学部',null,'econ'],['理工学部',null,'eng'],['文学部',null,'hum'],['総合政策学部',null,'soc']],
+  '法政大学':[['法学部',null,'law'],['文学部',null,'hum'],['経済学部',null,'econ'],['社会学部',null,'soc'],['経営学部',null,'econ'],['理工学部',null,'eng'],['スポーツ健康学部',null,'sport']],
+  '東京理科大学':[['理学部第一部',null,'sci'],['工学部',null,'eng'],['薬学部',null,'pharm'],['創域理工学部',null,'eng'],['先進工学部',null,'eng'],['経営学部',null,'econ']],
+  '埼玉大学':[['教養学部',null,'hum'],['経済学部',null,'econ'],['教育学部',null,'edu'],['理学部',null,'sci'],['工学部',null,'eng']],
+  '東洋大学':[['文学部',null,'hum'],['経済学部',null,'econ'],['経営学部',null,'econ'],['法学部',null,'law'],['社会学部',null,'soc'],['理工学部',null,'eng'],['情報連携学部',null,'eng']],
+  '日本大学':[['法学部',null,'law'],['文理学部',null,'hum'],['経済学部',null,'econ'],['商学部',null,'econ'],['芸術学部',null,'art'],['理工学部',null,'eng'],['生産工学部',null,'eng'],['医学部',null,'med'],['歯学部',null,'dent'],['スポーツ科学部',null,'sport']],
+  '亜細亜大学':[['経営学部',null,'econ'],['経済学部',null,'econ'],['法学部',null,'law'],['国際関係学部',null,'intl']],
+  '筑波大学':[['人文・文化学群',null,'hum'],['社会・国際学群',null,'soc'],['理工学群',null,'eng'],['情報学群',null,'eng'],['医学群',null,'med'],['体育専門学群',null,'sport']],
+  '宇都宮大学':[['地域デザイン科学部',null,'soc'],['国際学部',null,'intl'],['共同教育学部',null,'edu'],['工学部',null,'eng'],['農学部',null,'agri']],
+  '群馬大学':[['共同教育学部',null,'edu'],['情報学部',null,'eng'],['医学部',null,'med'],['理工学部',null,'eng']],
+  '高崎経済大学':[['経済学部',null,'econ'],['地域政策学部',null,'soc']],
+  '茨城大学':[['人文社会科学部',null,'hum'],['教育学部',null,'edu'],['理学部',null,'sci'],['工学部',null,'eng'],['農学部',null,'agri']],
+  '獨協大学':[['外国語学部',null,'intl'],['国際教養学部',null,'intl'],['経済学部',null,'econ'],['法学部',null,'law']],
+  '白鴎大学':[['経営学部',null,'econ'],['教育学部',null,'edu'],['法学部',null,'law']],
+  '常磐大学':[['人間科学部',null,'soc'],['総合政策学部',null,'soc'],['看護学部',null,'nurse']],
+  '東北大学':[['文学部',null,'hum'],['教育学部',null,'edu'],['法学部',null,'law'],['経済学部',null,'econ'],['理学部',null,'sci'],['医学部',null,'med'],['歯学部',null,'dent'],['薬学部',null,'pharm'],['工学部',null,'eng'],['農学部',null,'agri']],
+  '宮城教育大学':[['教育学部',null,'edu']],
+  '宮城大学':[['看護学群',null,'nurse'],['事業構想学群',null,'econ'],['食産業学群',null,'agri']],
+  '山形大学':[['人文社会科学部',null,'hum'],['地域教育文化学部',null,'edu'],['理学部',null,'sci'],['医学部',null,'med'],['工学部',null,'eng'],['農学部',null,'agri']],
+  '福島大学':[['人文社会学群',null,'hum'],['理工学群',null,'eng'],['農学群',null,'agri']],
+  '秋田大学':[['教育文化学部',null,'edu'],['医学部',null,'med'],['理工学部',null,'eng'],['国際資源学部',null,'sci']],
+  '岩手大学':[['人文社会科学部',null,'hum'],['教育学部',null,'edu'],['理工学部',null,'eng'],['農学部',null,'agri']],
+  '弘前大学':[['人文社会科学部',null,'hum'],['教育学部',null,'edu'],['医学部',null,'med'],['理工学部',null,'eng'],['農学生命科学部',null,'agri']],
+  '国際教養大学':[['国際教養学部',null,'intl']],
+  '京都大学':[['総合人間学部',null,'hum'],['文学部',null,'hum'],['教育学部',null,'edu'],['法学部',null,'law'],['経済学部',null,'econ'],['理学部',null,'sci'],['医学部',null,'med'],['薬学部',null,'pharm'],['工学部',null,'eng'],['農学部',null,'agri']],
+  '大阪大学':[['文学部',null,'hum'],['人間科学部',null,'soc'],['外国語学部',null,'intl'],['法学部',null,'law'],['経済学部',null,'econ'],['理学部',null,'sci'],['医学部',null,'med'],['歯学部',null,'dent'],['薬学部',null,'pharm'],['工学部',null,'eng'],['基礎工学部',null,'eng']],
+  '神戸大学':[['文学部',null,'hum'],['国際人間科学部',null,'intl'],['法学部',null,'law'],['経済学部',null,'econ'],['経営学部',null,'econ'],['理学部',null,'sci'],['医学部',null,'med'],['工学部',null,'eng'],['農学部',null,'agri'],['海洋政策科学部',null,'sci']],
+  '大阪公立大学':[['文学部',null,'hum'],['法学部',null,'law'],['経済学部',null,'econ'],['商学部',null,'econ'],['理学部',null,'sci'],['工学部',null,'eng'],['農学部',null,'agri'],['獣医学部',null,'sci'],['医学部',null,'med'],['看護学部',null,'nurse'],['生活科学部',null,'soc']],
+  '京都工芸繊維大学':[['工芸科学部',null,'eng']],
+  '兵庫県立大学':[['国際商経学部',null,'econ'],['社会情報科学部',null,'eng'],['工学部',null,'eng'],['理学部',null,'sci'],['環境人間学部',null,'soc'],['看護学部',null,'nurse']],
+  '滋賀大学':[['経済学部',null,'econ'],['教育学部',null,'edu'],['データサイエンス学部',null,'eng']],
+  '和歌山大学':[['経済学部',null,'econ'],['教育学部',null,'edu'],['システム工学部',null,'eng'],['観光学部',null,'soc']]
+};
+const ABROAD_MAJOR=[['経済学',null,'econ'],['コンピュータサイエンス',null,'eng'],['国際関係学',null,'intl'],['生物学',null,'sci'],['経営学',null,'econ'],['心理学',null,'hum']];
+const FIELD={hum:{k:3,j:2},edu:{k:2,r:3},law:{k:4},econ:{k:3,r:1},sci:{k:5},eng:{k:5},med:{k:6,h:-1},dent:{k:5},nurse:{k:3,r:2},pharm:{k:5},agri:{k:3,h:1},sport:{h:4,k:1},intl:{k:3,r:1},soc:{k:3,r:2},art:{j:4}};
+const FIELD_VAL={hum:['learn','love'],edu:['family','local'],law:['work','money'],econ:['work','money'],sci:['learn'],eng:['work','learn'],med:['health','work'],dent:['health'],nurse:['health','family'],pharm:['health','money'],agri:['local','free'],sport:['health','love'],intl:['free','learn'],soc:['local','family'],art:['love','free']};
+function facultyScene(L){
+  const s=L.school;const list=s.abroad?ABROAD_MAJOR:(FAC[s.name]||[]);
+  if(!list.length)return null;
+  const opts=[];
+  list.forEach(f=>{
+    const deps=f[1]||[null];
+    deps.forEach(d=>{
+      let field=f[2];if(d==='保健学科')field='nurse';if(d==='口腔生命福祉学科')field='nurse';if(d==='健康栄養学科')field='nurse';
+      const label=s.abroad?`${f[0]}を専攻する`:d?`${f[0]} ${d}`:f[0];
+      const six=(field==='med'||field==='dent'||(field==='pharm'&&!/理科二類/.test(f[0])))&&!/保健学科|口腔生命福祉学科/.test(d||'');
+      opts.push(opt(label,L=>{
+        L.faculty=s.abroad?f[0]:(d?`${f[0]} ${d}`:f[0]);L.field=field;
+        if(six)L.school.end=L.age+6;
+        fx(L,FIELD[field]||{});turn(L,`${L.school.name} ${L.faculty}`);
+        return {text:`${L.faculty}${s.abroad?'を専攻することにした':'で学びはじめた'}。${six?'卒業まで6年かかる。':''}`};
+      },FIELD_VAL[field]||[],six?'6年制':''));
+    });
+  });
+  return scene({title:`${s.name} ${s.abroad?'専攻':'学部・学科'}を選ぶ`,body:'どこで学びますか。(このゲームでは、大学に合格したあとで学部・学科を選びます)',stats:['aFac'],opts});
+}
+
+/* ---------- プロ・実業団 ----------
+   [チーム・所属先, 所在地]。プロ(pro)か、会社に属して競技を続ける実業団(corp)か */
+const PRO={
+  '野球':{kind:'pro',m:[['オイシックス新潟アルビレックス・ベースボール・クラブ','新潟市'],['読売ジャイアンツ','東京都'],['東北楽天ゴールデンイーグルス','宮城県仙台市'],['福岡ソフトバンクホークス','福岡県福岡市']],f:[]},
+  'サッカー':{kind:'pro',m:[['アルビレックス新潟','新潟市'],['鹿島アントラーズ','茨城県鹿嶋市'],['浦和レッズ','埼玉県さいたま市'],['川崎フロンターレ','神奈川県川崎市']],f:[['アルビレックス新潟レディース','新潟市'],['日テレ・東京ヴェルディベレーザ','東京都'],['INAC神戸レオネッサ','兵庫県神戸市']]},
+  'バスケットボール':{kind:'pro',m:[['新潟アルビレックスBB','長岡市'],['千葉ジェッツ','千葉県船橋市'],['宇都宮ブレックス','栃木県宇都宮市']],f:[['ENEOSサンフラワーズ','千葉県柏市'],['トヨタ自動車アンテロープス','愛知県名古屋市']]},
+  'バレーボール':{kind:'pro',m:[['サントリーサンバーズ大阪','大阪府大阪市'],['ジェイテクトSTINGS愛知','愛知県刈谷市']],f:[['NECレッドロケッツ川崎','神奈川県川崎市'],['SAGA久光スプリングス','佐賀県鳥栖市']]},
+  '卓球':{kind:'pro',m:[['木下マイスター東京','東京都']],f:[['木下アビエル神奈川','神奈川県']]},
+  '陸上競技':{kind:'corp',m:[['旭化成 陸上部','宮崎県延岡市'],['トヨタ自動車 陸上長距離部','愛知県豊田市']],f:[['積水化学 女子陸上競技部','大阪府大阪市'],['資生堂 ランニングクラブ','東京都']]},
+  '柔道':{kind:'corp',m:[['旭化成 柔道部','宮崎県延岡市']],f:[['パーク24 柔道部','東京都']]},
+  '水泳':{kind:'corp',m:[['セントラルスポーツ','東京都'],['ミキハウス','大阪府八尾市']],f:[['セントラルスポーツ','東京都'],['ミキハウス','大阪府八尾市']]}
+};
+function proTeams(L){const sp=L.sportName&&PRO[L.sportName];if(!sp)return [];return sp[L.sex]||[];}
+function proOK(L){return !L.proTried&&L.club==='運動部'&&proTeams(L).length>0&&sportScore(L)>=9;}
+function proP(L){return clamp(0.2+(sportScore(L)-9)*0.1,0.15,0.7);}
+function proOpt(L,stage){
+  const sp=PRO[L.sportName];const p=proP(L);
+  return opt(`${sp.kind==='pro'?'プロ':'実業団'}を目指す(${L.sportName})`,L=>{
+    L.proTried=true;L.stats.add('aPro');
+    if(R()<p)return {text:`${L.sportName}で、${sp.kind==='pro'?'プロ':'実業団'}のチームから声がかかった。`,hot:true,next:[proTeamScene(L)]};
+    addLog(L,`${sp.kind==='pro'?'プロ':'実業団'}には届かなかった。`,'work',true);turn(L,`${L.sportName}で${sp.kind==='pro'?'プロ':'実業団'}を目指したが、届かなかった`);
+    return {text:'声はかからなかった。別の道を選ぶ。',next:[stage==='hs'?pathScene(L):gradScene(L)]};
+  },['health','love','work'],`声がかかる見込み ${Math.round(p*100)}%`,1.2);
+}
+function proTeamScene(L){
+  const sp=PRO[L.sportName];
+  const opts=proTeams(L).map(t=>{
+    const r=R();const tier=r<0.05?'top':r<0.35?'mid':'low';
+    const sal=tier==='top'?ri(1500,3000):tier==='mid'?ri(800,1500):ri(400,800);
+    const until=L.age+(tier==='top'?ri(12,17):tier==='mid'?ri(8,13):ri(4,9));
+    const note=sp.kind==='pro'?`プロ契約 / 1年目の年収 約${yen(Math.round(sal/10)*10)}`:'会社員として競技を続ける / 年収は会社の給与';
+    return opt(`${t[0]}(${t[1]})`,L=>{
+      const inPref=cityMuni(t[1])!=null;
+      L.school=null;L.roninNow=false;if(L.edu==='univ_pending'||!L.edu||L.edu==='none')L.edu=L.edu==='univ_pending'?'univ':'hs';
+      L.job={size:sp.kind==='pro'?'pro':'l',inPref,company:t[0],label:sp.kind==='pro'?`${t[0]} 選手`:`${t[0]} 所属`,salary:sal,until,athlete:true};
+      L.workStart=L.age;setRole(L,'work');mark(L,1,sp.kind==='pro'?'プロ入り':'実業団');L.focus=defaultFocus(L);
+      if(inPref){const mi=cityMuni(t[1]);setLoc(L,{inPref:true,muni:mi,label:MUNI[mi].city});}else setLoc(L,{inPref:false,muni:null,label:t[1]});
+      fx(L,{j:8,h:2});turn(L,`${t[0]}に入った(${sp.kind==='pro'?'プロ':'実業団'}・${L.sportName})`);
+      return {text:`${t[0]}に入った。${sp.kind==='pro'?`1年目の年収は約${yen(Math.round(sal/10)*10)}(仮定)。`:'会社に勤めながら競技を続ける。'}`,hot:true};
+    },[],note);
+  });
+  return scene({title:`${L.age}歳 ${sp.kind==='pro'?'プロ':'実業団'}のチームを選ぶ`,body:`${L.sportName}を続けてきた力が認められ、チームから声がかかりました。`,stats:['aPro'],opts});
+}
+function proRetireScene(L){
+  const team=L.job.company;
+  return scene({title:`${L.age}歳 現役引退`,body:`${team}で${L.sportName}の選手として過ごした日々が終わります。これからの仕事を選びます。`,stats:['aPro'],opts:[
+    opt(`${team}に残り、指導者・スタッフになる`,L=>{L.job={...L.job,size:'p',label:`${team} スタッフ`,athlete:false};L.retiredAthlete=true;turn(L,'現役を引退し、チームのスタッフに');return {text:'現役を引退し、チームのスタッフになった。',hot:true};},['love','local']),
+    opt('一般の会社に就職する',L=>{const co=newCompany(L);L.retiredAthlete=true;turn(L,`現役を引退し、${co.name}に就職`);return {text:`現役を引退し、${co.name}で働きはじめた。`,hot:true};},['work','money']),
+    opt('ふるさとに戻って働く',L=>{const h=MUNI[L.birth];setLoc(L,{inPref:true,muni:h.i,label:h.city});const co=newCompany(L);L.retiredAthlete=true;turn(L,`引退して、ふるさとの${co.name}へ`);return {text:`ふるさとに戻り、${co.name}で働きはじめた。`,hot:true};},['family','local'])
+  ]});
+}
+
 function judgeUni(L,u,p){
   if(R()<p){
     L.school={type:'univ',name:u.name,end:L.age+4,inPref:u.inPref,city:u.city||u.muni,abroad:!!u.abroad};
@@ -962,7 +1088,7 @@ function judgeUni(L,u,p){
     else if(u.abroad){setLoc(L,{inPref:false,abroad:true,muni:null,label:u.city});fx(L,{r:-6,k:3});addLog(L,`${u.city}で学生生活をはじめた。`,'home',true);}
     else{setLoc(L,{inPref:false,muni:null,label:u.city});fx(L,{r:-6});addLog(L,`${u.city}でひとり暮らしをはじめた。`,'home');}
     fx(L,{k:5,j:4});turn(L,`${u.name}に入学${L.ronin?`(浪人${L.ronin}年)`:''}`);mark(L,1,'大学');setRole(L,'school');
-    return {text:`${u.name}に合格した。`,hot:true};
+    const fs_=facultyScene(L);return {text:`${u.name}に合格した。`,hot:true,next:fs_?[fs_]:[]};
   }
   addLog(L,`${u.name}は不合格だった。`,'learn',true);
   return {text:`${u.name}は不合格だった。`,next:[failScene(L)]};
@@ -1124,6 +1250,10 @@ function gradScene(L){
     opt(`県内の役所: ${cP.name}`,mk('p',true,false,cP),['money','local'],coNote(cP,L,L.edu,'p'),0.6),
     opt(`県外の大きな会社: ${cOutL.name}(${cOutL.place})`,mk('l',false,false,cOutL),['work','free'],coNote(cOutL,L,L.edu,'l'),s.inPref?0.6:1.4),
     opt(`県外の中小企業: ${cOutS.name}`,mk('s',false,false,cOutS),['free','love'],coNote({generic:true},L,L.edu,'s'),s.inPref?0.3:0.8),
+    ...(L.field==='med'&&!/保健学科/.test(L.faculty||'')?[(()=>{const h=pick([['新潟大学医歯学総合病院','新潟市'],['新潟市民病院','新潟市'],['長岡赤十字病院','長岡市'],['新潟県立中央病院','上越市']]);return opt(`医師(研修医)として働く: ${h[0]}`,mk('doc',true,false,{name:h[0],place:h[1]}),['health','work'],`実在の病院 / 初年度 年収 約${yen(estWage(L,L.edu,'doc'))}`,2);})()]:[]),
+    ...(L.field==='nurse'?[(()=>{const h=pick([['新潟市民病院','新潟市'],['長岡赤十字病院','長岡市'],['新潟県立中央病院','上越市']]);return opt(`看護・医療の仕事に就く: ${h[0]}`,mk('p',true,false,{name:h[0],place:h[1]}),['health','family'],`実在の病院 / 初年度 年収 約${yen(estWage(L,L.edu,'p'))}`,1.6);})()]:[]),
+    ...(L.field==='edu'?[opt('教員になる: 新潟県の公立学校',mk('p',true,true,{name:'新潟県の公立学校(教員)',place:home.city}),['family','local'],`実在の機関 / 初年度 年収 約${yen(estWage(L,L.edu,'p'))}`,1.6)]:[]),
+    ...(proOK(L)?[proOpt(L,'grad')]:[]),
     ...(cX?[opt(`海外で就職: ${cX.name}(${cX.place})`,mk('x',false,false,cX),['free','work','learn'],coNote(cX,L,L.edu,'x')+' / 生活費も高い',s.abroad?2.2:0.25)]:[])
   ]});
 }
@@ -1242,7 +1372,7 @@ function stepYear(){
   if(L.school&&L.school.type!=='hs'&&L.school.end===a)Q.push(gradScene(L));
   const working=L.job&&!L.retired;
   if(a===L.sched.love&&!L.married)Q.push(loveScene(L));
-  if(a===L.sched.transfer&&working&&!L.unemp)Q.push(transferScene(L));
+  if(a===L.sched.transfer&&working&&!L.unemp&&!L.job.athlete)Q.push(transferScene(L));
   if(working&&L.unemp&&a>L.unempAt){L.unemp=false;const co=newCompany(L);addLog(L,`${co.name}で新しく働きはじめた。`,'work');turn(L,`${co.name}で再就職`);}
   if(a>=L.sched.house&&a<=38&&!L.ownHouse&&!L.houseAsked&&working){L.houseAsked=true;Q.push(houseScene(L));}
   if(a>=L.sched.care&&a<=62&&!L.careAsked){const p=L.parents.find(p=>p.alive&&p.age>=75);if(p){L.careAsked=true;Q.push(careScene(L,p));}}
@@ -1251,6 +1381,7 @@ function stepYear(){
   if(L.reemp===a)addLog(L,'再雇用の仕事を終えた。','work');
   if(L.age>=L.sched.snow&&!L.snowAsked&&L.loc.inPref&&muniOf(L).snow>=2&&a<=85){L.snowAsked=true;L.stats.add('snowex');Q.push(snowScene(L));}
   if(a===75)Q.push(licenseScene(L));
+  if(L.job&&L.job.athlete){if(a>=L.job.until){L.job.athlete=false;Q.push(proRetireScene(L));}else if(L.job.size==='pro'){L.job.salary=Math.max(300,Math.round(L.job.salary*(1+gauss()*0.15)));}}
   if(L.school&&L.school.type==='univ'&&!L.school.abroad&&a===L.school.end-2&&!L.studyAsked&&abroadOK(L,'study')){L.studyAsked=true;Q.push(studyScene(L));}
   // 出来事
   randomEvents(L);
@@ -1293,7 +1424,7 @@ function randomEvents(L){
     if(R()<0.75){addLog(L,`${ILL[L.illness.type]}の治療がひと区切りついた。`,'health');L.illness=null;}else L.illness.until=a+1;
   }
   // 失業
-  if(L.job&&!L.retired&&!L.unemp&&a>=20&&a<=59){
+  if(L.job&&!L.job.athlete&&!L.retired&&!L.unemp&&a>=20&&a<=59){
     const f=focusDef(L);const p=0.025*(f&&f[0]==='work'?0.7:1);
     if(R()<p){L.unemp=true;L.unempAt=a;fx(L,{j:-6});addLog(L,'勤め先を離れることになり、仕事を探しはじめた。','work',true);mark(L,1,'失業');turn(L,'失業');L.stats.add('aUnemp');}
   }
@@ -1340,7 +1471,7 @@ const OUT_TYPE={quake:['大きな地震',1],storm:['大雨・台風・洪水',1]
 function hazRegion(L){
   const t=L.loc.label||'';
   if(L.loc.abroad)return OUT_HAZ[t]?t:null;
-  const rules=[[/北海道|札幌/,'北海道'],[/広島|府中町/,'中国'],[/福岡/,'九州'],[/宮城|仙台|山形|福島|秋田|岩手|盛岡|青森|弘前/,'東北'],[/茨城|水戸|つくば|栃木|宇都宮|小山|群馬|前橋|高崎/,'北関東'],[/愛知|名古屋|豊田|刈谷|静岡|浜松/,'東海'],[/大阪|門真|京都|兵庫|神戸|滋賀|彦根|和歌山/,'近畿']];
+  const rules=[[/北海道|札幌/,'北海道'],[/広島|府中町/,'中国'],[/福岡|佐賀|宮崎/,'九州'],[/宮城|仙台|山形|福島|秋田|岩手|盛岡|青森|弘前/,'東北'],[/茨城|水戸|つくば|栃木|宇都宮|小山|群馬|前橋|高崎/,'北関東'],[/愛知|名古屋|豊田|刈谷|静岡|浜松/,'東海'],[/大阪|門真|京都|兵庫|神戸|滋賀|彦根|和歌山/,'近畿']];
   for(const r of rules)if(r[0].test(t))return r[1];
   return '首都圏';
 }
