@@ -970,6 +970,63 @@ function newCompany(L){
   else{size=R()<.35?'l':'s';co=pickCompany(L,size,false);}
   L.job={...makeJob(size,L.loc.inPref,co)};return co;
 }
+// 別の土地へ移るときの候補(実在する企業と、その本社がある市区町村)。[企業名, 所在地, 規模]
+const MOVE_DOM=[
+  ['日立製作所','東京都千代田区','l'],['三菱UFJ銀行','東京都千代田区','l'],['東京海上日動火災保険','東京都千代田区','l'],['三井物産','東京都千代田区','l'],
+  ['ソニーグループ','東京都港区','l'],['ソフトバンク','東京都港区','l'],['伊藤忠商事','東京都港区','l'],['NTTデータ','東京都江東区','l'],['楽天グループ','東京都世田谷区','l'],
+  ['日産自動車','神奈川県横浜市','l'],['富士通','神奈川県川崎市','l'],
+  ['トヨタ自動車','愛知県豊田市','l'],['デンソー','愛知県刈谷市','l'],['中部電力','愛知県名古屋市','l'],
+  ['スズキ','静岡県浜松市','l'],['ヤマハ','静岡県浜松市','l'],
+  ['任天堂','京都府京都市','l'],['京セラ','京都府京都市','l'],
+  ['キーエンス','大阪府大阪市','l'],['パナソニック ホールディングス','大阪府門真市','l'],
+  ['マツダ','広島県府中町','l'],
+  ['東北電力','宮城県仙台市','l'],['七十七銀行','宮城県仙台市','s'],
+  ['九州電力','福岡県福岡市','l'],['ふくおかフィナンシャルグループ','福岡県福岡市','l'],
+  ['北海道電力','北海道札幌市','l'],['ニトリホールディングス','北海道札幌市','l']
+];
+const ABROAD_CITY={'Google':'マウンテンビュー','Amazon':'シアトル','Microsoft':'レドモンド','HSBC':'ロンドン','Unilever':'ロンドン','Shopify':'オタワ','カナダロイヤル銀行(RBC)':'トロント','Atlassian':'シドニー','BHP':'メルボルン','Fonterra':'オークランド','Air New Zealand':'オークランド','DBS銀行':'シンガポール','Grab':'シンガポール','Siemens':'ミュンヘン','SAP':'ヴァルドルフ','TSMC':'新竹','ASUS':'台北'};
+// いまの会社のまま本社へ移れるか(本社の所在地がわかる会社だけ)
+function hqOf(name){const d=MOVE_DOM.find(c=>c[0]===name);if(d)return {place:d[1],inPref:false};const i=[...CO.inL,...CO.inS].find(c=>c[0]===name);if(i)return {place:i[1],inPref:true};return null;}
+// 移った先での年収の見込み(額面、10万円単位)
+function moveWage(L,size,career){const j=L.job,c=L.career;L.job={size};L.career=career;const w=wageBase(L);L.job=j;L.career=c;return Math.round(w/10)*10;}
+function moveCandidates(L){
+  const here=L.loc.label;const cur=L.job&&L.job.company;const out=[];
+  const hq=cur?hqOf(cur):null;
+  if(hq&&hq.place!==here&&!(hq.inPref&&L.loc.inPref&&MUNI[cityMuni(hq.place)].city===muniOf(L).city))
+    out.push({kind:'transfer',name:cur,place:hq.place,size:L.job.size,inPref:hq.inPref,abroad:false});
+  const inList=[...CO.inL.map(c=>[...c,'l']),...CO.inS.map(c=>[...c,'s'])].filter(c=>c[1]!==muniOf(L).city||!L.loc.inPref);
+  const dom=MOVE_DOM.filter(c=>c[1]!==here&&c[0]!==cur);
+  const pickN=(arr,n)=>arr.slice().sort(()=>R()-.5).slice(0,n);
+  pickN(inList,L.loc.inPref?1:2).forEach(c=>out.push({kind:'change',name:c[0],place:c[1],size:c[2],inPref:true,abroad:false}));
+  pickN(dom,3).forEach(c=>out.push({kind:'change',name:c[0],place:c[1],size:c[2],inPref:false,abroad:false}));
+  if(L.loc.abroad||abroadOK(L,'job')){const c=pick(Object.keys(CO.abroad));const n=pick(CO.abroad[c]);if(n!==cur)out.push({kind:'change',name:n,place:`${c}・${ABROAD_CITY[n]||c}`,country:c,size:'x',inPref:false,abroad:true});}
+  const n=Math.min(out.length,ri(3,5));
+  const keep=out.filter(c=>c.kind==='transfer');
+  const rest=out.filter(c=>c.kind!=='transfer').sort(()=>R()-.5).slice(0,n-keep.length);
+  return [...keep,...rest];
+}
+function moveScene(L){
+  L.stats.add('aCompany');
+  const cands=moveCandidates(L);
+  const opts=cands.map(c=>{
+    const career=c.kind==='transfer'?L.career+2:Math.max(0,L.career-2);
+    const w=moveWage(L,c.size,career);
+    const tag=c.kind==='transfer'?'いまの会社のまま転勤':'転職';
+    return opt(`${c.place}: ${c.name}`,L=>{
+      L.career=career;fx(L,{r:-4,k:2});
+      L.job=makeJob(c.size,c.inPref,{name:c.name});
+      let to;
+      if(c.inPref){const mi=cityMuni(c.place);to={inPref:true,muni:mi,label:MUNI[mi].city};}
+      else if(c.abroad)to={inPref:false,abroad:true,muni:null,label:c.country};
+      else to={inPref:false,muni:null,label:c.place};
+      setLoc(L,to);mark(L,0,c.kind==='transfer'?'転勤':'転職');
+      turn(L,`${c.place}の${c.name}へ(${tag})`);
+      return {text:`${c.place}の${c.name}に移った(${tag})。年収は約${w}万円の見込み(額面)。`,hot:true};
+    },c.abroad?['free','learn','work']:c.inPref?['family','local']:['work','free','money'],`${tag} / 年収 約${w}万円`,c.kind==='transfer'?1.5:1);
+  });
+  opts.push(opt('やっぱり移らない',()=>({next:[transferScene(L)]}),[],'',0.05));
+  return scene({title:`${L.age}歳 移る先を選ぶ`,body:`いま(${L.loc.label}・年収 約${Math.round(L.income/10)*10}万円)から移る先の候補です。企業も地名も実在のものですが、年収は賃金統計と仮定からの試算で、その企業の実際の給与ではありません。`,stats:['aCompany','wage','migr'],opts});
+}
 function cityMuni(city){const m=city==='新潟市'?MI['新潟市中央区']:MI[city];return m?m.i:null;}
 function office(city){return city+(/[町村]$/.test(city)?'役場':'役所');}
 function pickCompany(L,size,inPref,o){
@@ -1037,13 +1094,8 @@ function loveScene(L){
 }
 function marry(L){L.married=true;L.marriedAt=L.age;L.spouseAge=L.age+ri(-3,4)*(L.sex==='m'?-1:1);L.spouseAlive=true;fx(L,{j:6,r:4});turn(L,'結婚');mark(L,2,'結婚');}
 function transferScene(L){
-  return scene({title:`${L.age}歳 仕事の転機`,body:'会社から異動の話がありました。ほかの会社からも声がかかっています。',stats:['migr'],opts:[
-    opt('転勤を受けて、別の土地へ',L=>{
-      L.career+=2;fx(L,{r:-4,k:2});
-      let to;
-      if(L.loc.inPref){if(R()<.5)to={inPref:false,muni:null,label:pick(['東京圏','仙台','大阪','名古屋'])};else{const m=pick(['新潟市中央区','長岡市','上越市'].map(n=>MI[n]).filter(m=>m.i!==L.loc.muni));to={inPref:true,muni:m.i,label:m.city};}}
-      else{if(R()<.4){const m=MI[pick(['新潟市中央区','長岡市','上越市'])];to={inPref:true,muni:m.i,label:m.city};}else to={inPref:false,muni:null,label:pick(['東京圏','仙台','大阪','名古屋','福岡'])};}
-      setLoc(L,to);turn(L,`転勤で${to.label}へ`);mark(L,0,'転勤');return {text:`転勤で${to.label}に移った。`};},['work','free']),
+  return scene({title:`${L.age}歳 仕事の転機`,body:'会社から異動の話がありました。ほかの会社からも声がかかっています。別の土地へ移る場合は、候補の中から選べます。',stats:['migr'],opts:[
+    opt('別の土地へ移る(候補から選ぶ)',()=>({next:[moveScene(L)]}),['work','free'],'転勤・転職',1),
     opt('転職する',L=>{const co=newCompany(L);L.career=Math.max(0,L.career-2);fx(L,{j:3,k:2});turn(L,`${co.name}に転職`);mark(L,1,'転職');return {text:`${co.name}に転職した。`};},['free','love']),
     opt('いまの場所に残る',L=>{fx(L,{j:1,r:2});turn(L,'いまの職場に残った');return {text:'いまの職場に残ることにした。'};},['family','local'],'',1.3)
   ]});
