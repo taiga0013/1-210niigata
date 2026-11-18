@@ -552,7 +552,7 @@ const STAT={
   aUnemp:['assume','失業は20〜59歳で年2.5%の確率としています。'],
   aCare:['assume','介護の負担と費用は仮定です。'],
   aEnv:['assume','生まれた環境の5段階評価は、世帯年収の位置・親の学歴・ひとり親かどうか・住まいの点数を足したゲーム内の目安です。抽選結果のおよそ下位10%が1、上位10%が5になるよう区切っています。人や家庭の価値を決めるものではありません。'],
-  aJob:['assume','親の職種は、世帯年収の位置と親の学歴に合わせた割合で抽選しています。「海外とのつながり」があると、海外への進学や就職の話が来やすくなります。'],
+  aJob:['assume','親の職種は、世帯年収の位置と親の学歴に合わせた割合で抽選しています。ふたり親なら、もう一人の職種も別の割合で抽選し、65歳を過ぎた勤め人は退職したことにしています。「海外とのつながり」があると、海外への進学や就職の話が来やすくなります。'],
   aAbroad:['assume','海外の高校・大学・留学・海外就職は、本人の偏差値や知識、親の職種と世帯年収で選択肢が出るゲーム上の決まりです。学校は国ごとの代表的な目安で、難しさ・合格しやすさ・費用・賃金(国内の中小企業の約1.5倍)・生活費(国内の1.35倍)はすべて仮定です。'],
   aCompany:['assume','就職先の企業名は、新潟県内や全国・海外に実在する企業の名前と所在地を例として使っています。ゲーム内の年収・転勤・失業などは賃金統計と仮定から計算したもので、その企業の実際の給与や出来事とは関係ありません。県外の中小企業は業種だけを示しています。'],
   aAch:['assume','実績の中身はゲーム上の決まりです。'],
@@ -580,7 +580,12 @@ function newProfile(mode,muniIdx){
     if(t==='top')w*=P_TOP(pct); else if(t==='high'||t==='intl')w*=pct<=30?2.2:pct>70?0.4:1; else if(t==='low')w*=pct<=30?0.5:pct>60?1.6:1;
     if(pedu==='univ'){if(t==='high'||t==='top'||t==='intl')w*=1.8;if(t==='low')w*=0.6;} else if(t==='high'||t==='top'||t==='intl')w*=0.4;
     if(j[0]==='農業・漁業'&&rural)w*=2.5; return w;});
-  const pjob=pj[0];const intl=pj[2]==='intl'||(pj[0]==='技術者・研究者'&&R()<.3)||(pj[2]==='top'&&R()<.25);
+  const pjob=pj[0];
+  // もう一人の親の職種(ゲーム上の割合)。ひとり親なら、その親が上の職種
+  let fJob,mJob,singleRole=null;
+  if(single){singleRole=R()<.85?'母':'父';if(singleRole==='母')mJob=pjob;else fJob=pjob;}
+  else{const other=wpick(OTHER_JOBS,j=>j[1])[0];if(R()<.7){fJob=pjob;mJob=other;}else{mJob=pjob;fJob=other;}}
+  const intl=pj[2]==='intl'||(pj[0]==='技術者・研究者'&&R()<.3)||(pj[2]==='top'&&R()<.25);
   const reg=regionOf(muni);
   const homeW=reg==='都市部'?{own:50,rent:42,three:8}:{own:62,rent:16,three:22};
   const home=wpick(Object.keys(homeW),k=>homeW[k]);
@@ -592,7 +597,7 @@ function newProfile(mode,muniIdx){
   const fAge=Math.round(clamp(mAge+2+gauss()*3,19,60));
   const younger=bo===1?(R()<.55?(R()<.2?2:1):0):bo===2?(R()<.25?1:0):(R()<.06?1:0);
   const type=['E','I'][ri(0,1)]+['S','N'][ri(0,1)]+['T','F'][ri(0,1)]+['J','P'][ri(0,1)];
-  return {mode,muni:muni.i,sex,name:pick(SURN)+' '+pick(GIVEN[sex]),vals,single,pct,bo,younger,pedu,home,dev,mAge,fAge,type,pjob,intl};
+  return {mode,muni:muni.i,sex,name:pick(SURN)+' '+pick(GIVEN[sex]),vals,single,pct,bo,younger,pedu,home,dev,mAge,fAge,type,pjob,intl,fJob,mJob,singleRole};
 }
 // 生まれた環境の5段階評価(ゲーム上の仮定)。世帯年収の位置・親の学歴・ひとり親かどうか・住まいの点数を足し、
 // 抽選結果のおよそ下位10%を1、次の20%を2、真ん中40%を3、次の20%を4、上位10%を5にしている
@@ -604,6 +609,18 @@ function envRate(P){
 }
 function starsHTML(lv){return '<span class="stars" aria-label="5段階中'+lv+'">'+'★'.repeat(lv)+'<i>'+'★'.repeat(5-lv)+'</i></span>';}
 const PJOBS=[['会社員(事務・営業)',30,'mid'],['工場・建設などの技能職',18,'low'],['販売・サービスの仕事',12,'low'],['医療・福祉の仕事',10,'mid'],['公務員',8,'mid'],['自営業',7,'mid'],['農業・漁業',4,'low'],['教員',4,'high'],['技術者・研究者',4,'high'],['医師',1.2,'top'],['会社経営者',2,'top'],['海外と取引のある会社員(商社・外資系など)',2,'intl']];
+const OTHER_JOBS=[['会社員(事務・営業)',30],['パート・アルバイト(販売・サービス)',22],['いまは家庭のことに専念',18],['医療・福祉の仕事',12],['工場・建設などの技能職',9],['公務員',5],['教員',3],['農業・漁業',1]];
+// 両親の表示用: [{role,age,job}]
+function parentsOf(P){
+  if(P.single){const r=P.singleRole||'母';return [{role:r,age:r==='母'?P.mAge:P.fAge,job:(r==='母'?P.mJob:P.fJob)||P.pjob}];}
+  return [{role:'父',age:P.fAge,job:P.fJob||P.pjob},{role:'母',age:P.mAge,job:P.mJob||'—'}];
+}
+// 65歳を過ぎたら、勤め人は退職したことにする(自営業などはそのまま)
+function parentJobNow(p){
+  if(!p.job||p.job==='—')return '';
+  if(p.age>=65&&!/自営業|農業|経営者|医師|家庭のこと/.test(p.job))return '退職(元・'+p.job+')';
+  return p.job;
+}
 function P_TOP(pct){return pct<=20?4:pct<=40?1.5:pct>60?0.2:1;}
 const PEDU={univ:'大学・大学院卒',col:'短大・専門学校卒',hs:'高校卒',jhs:'中学卒'};
 const HOME={own:'持ち家(一戸建て)',rent:'賃貸のアパート・マンション',three:'祖父母と同じ家(三世代)'};
@@ -629,8 +646,7 @@ function makeLife(P){
     sched:{}, stats:new Set(['pop','life']), maxK:70, maxR:70, cause:null, deathAge:null,
     yearEv:[], yearStats:[]
   };
-  if(P.single){ L.parents.push({role:R()<.85?'母':'父',age:P.mAge,alive:true}); L.parents[0].sex=L.parents[0].role==='母'?'f':'m'; }
-  else { L.parents.push({role:'父',sex:'m',age:P.fAge,alive:true}); L.parents.push({role:'母',sex:'f',age:P.mAge,alive:true}); }
+  parentsOf(P).forEach(p=>L.parents.push({role:p.role,sex:p.role==='母'?'f':'m',age:p.age,job:p.job,alive:true}));
   L.sched={love:ri(24,34),transfer:ri(28,45),house:ri(30,38),care:ri(45,62),snow:ri(70,80)};
   L.stats.add(P.mode==='A'?'sexA':'aSexB'); L.stats.add('births');
   if(P.mode==='A'&&muni.city==='新潟市')L.stats.add('aBirthsN');
@@ -1422,8 +1438,8 @@ function renderProfile(){
    <dt>大事にしていること</dt><dd>${P.vals.map(v=>VALUES[v]).join('、')}</dd>
    <dt>性格タイプ</dt><dd>${P.type}型(${P.type.split('').map(c=>TYPEJ[c]).join('・')}) <small>ゲーム内の目安であり診断ではありません</small></dd>
    <dt>世帯年収</dt><dd>全国の上から${P.pct}%</dd>
-   <dt>家族</dt><dd>${P.single?'ひとり親の家庭':'ふたり親の家庭'} ・ 第${P.bo}子 <small>(${sibs})</small></dd>
-   <dt>親の職種</dt><dd>${esc(P.pjob||'—')}${P.intl?' <small>海外とのつながりがある</small>':''}</dd>
+   <dt>家族</dt><dd>${P.single?`ひとり親(${P.singleRole||'母'})の家庭`:'ふたり親の家庭'} ・ 第${P.bo}子 <small>(${sibs})</small></dd>
+   <dt>${P.single?'親':'両親'}</dt><dd>${parentsOf(P).map(p=>`${p.role} ${p.age}歳 ・ ${esc(p.job)}`).join('<br>')}${P.intl?'<br><small>海外とのつながりがある</small>':''}<br><small>年齢は生まれたときのもの</small></dd>
    <dt>親の学歴</dt><dd>${PEDU[P.pedu]}</dd>
    <dt>住まい</dt><dd>${HOME[P.home]}</dd>
    <dt>生まれた環境</dt><dd>${(()=>{const e=envRate(P);return `<span class="env">${starsHTML(e.lv)}<b>${e.lv} ${e.label}</b></span><ul class="envlist">${e.parts.map(p=>`<li><span>${p[0]}</span><b>${p[1]>0?'+':''}${p[1].toFixed(1)}</b></li>`).join('')}</ul>`;})()}</dd>
@@ -1471,7 +1487,7 @@ function renderPlay(){
   }
   // 家族
   const fam=[];
-  L.parents.forEach(p=>fam.push(`<span class="chip ${p.alive?'':'gone'}">${p.role} ${p.alive?p.age+'歳':'(亡)'}</span>`));
+  L.parents.forEach(p=>{const j=p.alive?parentJobNow(p):'';fam.push(`<span class="chip ${p.alive?'':'gone'}">${p.role} ${p.alive?p.age+'歳':'(亡)'}${j?' ・ '+esc(j):''}</span>`);});
   if(L.sibOlder||L.sibYounger)fam.push(`<span class="chip">きょうだい ${[L.sibOlder?`年上${L.sibOlder}人`:'',L.sibYounger?`年下${L.sibYounger}人`:''].filter(Boolean).join('・')}</span>`);
   if(L.married)fam.push(`<span class="chip ${L.spouseAlive?'':'gone'}">連れ合い ${L.spouseAlive?L.spouseAge+'歳':'(亡)'}</span>`);
   L.kids.forEach((k,i)=>fam.push(`<span class="chip ${k.alive?'':'gone'}">${k.sex==='m'?'息子':'娘'} ${k.alive?(L.age-k.born)+'歳':'(亡)'}</span>`));
