@@ -567,7 +567,8 @@ const STAT={
   disOut:['real','県外・海外の出来事の頻度は、その地域で1990〜2025年の36年間に起きた大きな災害・暴動・テロなどのうち、公的機関の資料や主要な報道で広く記録されているものの件数(下限)を、年あたりに直したものです。'],
   aDisOut:['assume','県外・海外で一人がその出来事に巻き込まれる割合(0.18×種類ごとの係数。暑さ・煙害は1.5、暴動0.7、テロ0.3など)と、被害の大きさ・影響はゲーム上の仮定です。新潟県外の国内は8つの地域に分けています。'],
   aFac:['assume','学部・学科の名前は各大学の実在のものですが、このゲームでは大学に合格したあとで選ぶ形にしています(実際は学部ごとに入試があります)。県外の大学は学部まで、海外の大学は専攻の分野だけです。医・歯・薬は6年制としています。'],
-  aPro:['assume','プロ・実業団に声がかかる見込み(競技の力から15〜70%)、年俸の幅(400万〜3,000万円)、現役を続ける年数はゲーム上の仮定です。チーム・所属先の名前は実在のものですが、年俸や出来事はそのチームの実際とは関係ありません。'],
+  aPro:['assume','プロ選手は1年ごとに契約更改があり、ほかのチームから話が来ることがあります。移籍先のチーム名は実在のものです。プロ・実業団に声がかかる見込み(競技の力から15〜70%)、年俸の幅(400万〜3,000万円)、現役を続ける年数はゲーム上の仮定です。チーム・所属先の名前は実在のものですが、年俸や出来事はそのチームの実際とは関係ありません。'],
+  aPromo:['assume','昇進の声がかかる年齢(主任27歳・係長32歳・課長38歳・部長45歳・役員52歳から)、1年あたりの声のかかりやすさ、役職ごとの賃金の倍率(主任1.05〜役員2.2倍)はゲーム上の仮定です。転職すると役職が1つ下がります。'],
   aAch:['assume','実績の中身はゲーム上の決まりです。'],
   aSport:['assume','スポーツ推薦は、運動や部活を重点にした年数・運動部・好きなこと・健康から出す「競技の力」で声がかかる仮定です。推薦先の学校は候補からの抽選で、実際の推薦枠を示すものではありません。高校は合格しやすさ90%、大学は50〜90%としています。'],
   snowex:['real','令和2年度の大雪では県内で死者21人、死傷者364人。屋根の雪下ろし中の事故が多くを占めました。']
@@ -688,7 +689,7 @@ function statusOf(L){
   if(L.roninNow)return `浪人生(${L.ronin}年目)`;
   if(L.retired){ if(L.reemp>a)return '再雇用で勤務'; if(L.localJob>a)return '地域の仕事'; return '退職後の暮らし'; }
   if(L.unemp)return '求職中';
-  if(L.job)return L.job.label;
+  if(L.job)return L.job.label+(L.job.rank?'・'+RANKS[L.job.rank]:'');
   return '—';
 }
 function addLog(L,text,cat,hot){L.log.push({age:L.age,text,cat:cat||'',hot:!!hot});L.yearEv.push({text,hot:!!hot});}
@@ -735,6 +736,7 @@ function wageBase(L){
   if(a<20)mon*=0.92;
   let y=mon*14.5/10;
   if(L.sex==='f')y*=0.82;
+  if(L.job&&L.job.rank)y*=RANK_MULT[L.job.rank];
   if(L.job)y*=L.job.size==='doc'?1.7:L.job.size==='x'?1.35:L.job.size==='l'?1.18:L.job.size==='p'?1.0:0.88;
   y*=1+Math.min(0.2,L.career*0.012);
   return y;
@@ -1062,7 +1064,7 @@ function proTeamScene(L){
     return opt(`${t[0]}(${t[1]})`,L=>{
       const inPref=cityMuni(t[1])!=null;
       L.school=null;L.roninNow=false;if(L.edu==='univ_pending'||!L.edu||L.edu==='none')L.edu=L.edu==='univ_pending'?'univ':'hs';
-      L.job={size:sp.kind==='pro'?'pro':'l',inPref,company:t[0],label:sp.kind==='pro'?`${t[0]} 選手`:`${t[0]} 所属`,salary:sal,until,athlete:true};
+      L.job={size:sp.kind==='pro'?'pro':'l',inPref,company:t[0],label:sp.kind==='pro'?`${t[0]} 選手`:`${t[0]} 所属`,salary:sal,until,athlete:true,tier};
       L.workStart=L.age;setRole(L,'work');mark(L,1,sp.kind==='pro'?'プロ入り':'実業団');L.focus=defaultFocus(L);
       if(inPref){const mi=cityMuni(t[1]);setLoc(L,{inPref:true,muni:mi,label:MUNI[mi].city});}else setLoc(L,{inPref:false,muni:null,label:t[1]});
       fx(L,{j:8,h:2});turn(L,`${t[0]}に入った(${sp.kind==='pro'?'プロ':'実業団'}・${L.sportName})`);
@@ -1078,6 +1080,68 @@ function proRetireScene(L){
     opt('一般の会社に就職する',L=>{const co=newCompany(L);L.retiredAthlete=true;turn(L,`現役を引退し、${co.name}に就職`);return {text:`現役を引退し、${co.name}で働きはじめた。`,hot:true};},['work','money']),
     opt('ふるさとに戻って働く',L=>{const h=MUNI[L.birth];setLoc(L,{inPref:true,muni:h.i,label:h.city});const co=newCompany(L);L.retiredAthlete=true;turn(L,`引退して、ふるさとの${co.name}へ`);return {text:`ふるさとに戻り、${co.name}で働きはじめた。`,hot:true};},['family','local'])
   ]});
+}
+
+/* ---------- 昇進(会社・役所に勤めている人) ----------
+   役職と、賃金の倍率・声がかかりはじめる年齢・1年あたりの声のかかりやすさ(すべてゲーム上の仮定) */
+const RANKS=['','主任','係長','課長','部長','役員'];
+const RANK_MULT=[1,1.05,1.12,1.3,1.55,2.2];
+const RANK_AGE=[0,27,32,38,45,52];
+const RANK_P=[0,0.14,0.09,0.05,0.025,0.006];
+function canPromote(L){return L.job&&!L.job.athlete&&L.job.size!=='pro'&&!L.unemp&&!L.retired&&L.age<60;}
+function promoScene(L){
+  const cur=L.job.rank||0,nx=cur+1;
+  const now=Math.round(wageBase(L)/10)*10;
+  const r0=L.job.rank;L.job.rank=nx;const next=Math.round(wageBase(L)/10)*10;L.job.rank=r0;
+  const opts=[
+    opt(`${RANKS[nx]}への昇進を引き受ける`,L=>{L.job.rank=nx;fx(L,nx>=4?{j:2,h:-3,r:-1}:{j:2,h:-2});mark(L,1,RANKS[nx]);turn(L,`${L.job.company||'職場'}で${RANKS[nx]}に昇進`);return {text:`${RANKS[nx]}に昇進した。年収は約${yen(next)}になる見込み(額面)。`,hot:true};},['work','money'],`年収 約${yen(now)} → 約${yen(next)}`,1.4),
+    opt('いまの立場のまま続ける',L=>{L.promoAskedAt=L.age;fx(L,{j:1,h:1});turn(L,`${RANKS[nx]}への昇進を断った`);return {text:'昇進の話は断り、いまの立場で働き続けることにした。'};},['family','free','health'],`年収 約${yen(now)}のまま`)
+  ];
+  if(nx>=3)opts.push(opt('管理職ではなく、専門職として腕をみがく',L=>{L.promoAskedAt=L.age;L.career+=2;fx(L,{k:4,j:1});turn(L,'専門職の道を選んだ');return {text:'管理職ではなく、専門職として仕事を深めることにした。'};},['learn','love'],'年収は少し上がる'));
+  return scene({title:`${L.age}歳 昇進の話`,body:`${L.job.company||'職場'}で、${RANKS[nx]}にならないかと声がかかりました。いまの立場は${RANKS[cur]||'役職なし'}です。`,stats:['aPromo','wage'],opts});
+}
+
+/* ---------- プロ選手の契約更改と移籍(1年ごと) ----------
+   移籍先の候補になる実在のチーム。[チーム名, 所在地, 国(海外のみ)] */
+const PRO_DOM={
+  '野球':{m:[['読売ジャイアンツ','東京都'],['東北楽天ゴールデンイーグルス','宮城県仙台市'],['福岡ソフトバンクホークス','福岡県福岡市'],['阪神タイガース','兵庫県西宮市'],['北海道日本ハムファイターズ','北海道北広島市'],['横浜DeNAベイスターズ','神奈川県横浜市'],['広島東洋カープ','広島県広島市']],f:[]},
+  'サッカー':{m:[['アルビレックス新潟','新潟市'],['鹿島アントラーズ','茨城県鹿嶋市'],['浦和レッズ','埼玉県さいたま市'],['川崎フロンターレ','神奈川県川崎市'],['横浜F・マリノス','神奈川県横浜市'],['ガンバ大阪','大阪府吹田市'],['サンフレッチェ広島','広島県広島市'],['ヴィッセル神戸','兵庫県神戸市']],
+              f:[['アルビレックス新潟レディース','新潟市'],['日テレ・東京ヴェルディベレーザ','東京都'],['INAC神戸レオネッサ','兵庫県神戸市'],['三菱重工浦和レッズレディース','埼玉県さいたま市']]},
+  'バスケットボール':{m:[['新潟アルビレックスBB','長岡市'],['千葉ジェッツ','千葉県船橋市'],['宇都宮ブレックス','栃木県宇都宮市'],['アルバルク東京','東京都'],['川崎ブレイブサンダース','神奈川県川崎市']],f:[['ENEOSサンフラワーズ','千葉県柏市'],['トヨタ自動車アンテロープス','愛知県名古屋市'],['デンソーアイリス','愛知県刈谷市'],['富士通レッドウェーブ','神奈川県川崎市']]},
+  'バレーボール':{m:[['サントリーサンバーズ大阪','大阪府大阪市'],['ジェイテクトSTINGS愛知','愛知県刈谷市'],['大阪ブルテオン','大阪府枚方市'],['ウルフドッグス名古屋','愛知県稲沢市']],f:[['NECレッドロケッツ川崎','神奈川県川崎市'],['SAGA久光スプリングス','佐賀県鳥栖市'],['東レアローズ滋賀','滋賀県大津市'],['デンソーエアリービーズ','愛知県西尾市']]},
+  '卓球':{m:[['木下マイスター東京','東京都'],['T.T彩たま','埼玉県']],f:[['木下アビエル神奈川','神奈川県'],['日本生命レッドエルフ','大阪府']]}
+};
+const PRO_ABROAD={
+  '野球':{m:[['ニューヨーク・ヤンキース','アメリカ・ニューヨーク','アメリカ'],['ロサンゼルス・ドジャース','アメリカ・ロサンゼルス','アメリカ'],['シアトル・マリナーズ','アメリカ・シアトル','アメリカ'],['サンディエゴ・パドレス','アメリカ・サンディエゴ','アメリカ']],f:[]},
+  'サッカー':{m:[['セルティック','イギリス(スコットランド)・グラスゴー','イギリス'],['ブライトン','イギリス(イングランド)・ブライトン','イギリス'],['シント=トロイデン','ベルギー・シント=トロイデン','ベルギー'],['フライブルク','ドイツ・フライブルク','ドイツ'],['レアル・ソシエダ','スペイン・サン・セバスティアン','スペイン']],
+              f:[['マンチェスター・シティ','イギリス(イングランド)・マンチェスター','イギリス'],['アーセナル','イギリス(イングランド)・ロンドン','イギリス'],['ノースカロライナ・カレッジ','アメリカ・ノースカロライナ州','アメリカ']]},
+  'バスケットボール':{m:[['ロサンゼルス・レイカーズ','アメリカ・ロサンゼルス','アメリカ'],['メンフィス・グリズリーズ','アメリカ・メンフィス','アメリカ'],['シドニー・キングス','オーストラリア・シドニー','オーストラリア']],f:[['ワシントン・ミスティックス','アメリカ・ワシントンD.C.','アメリカ'],['ラスベガス・エーシズ','アメリカ・ラスベガス','アメリカ']]},
+  'バレーボール':{m:[['ペルージャ','イタリア・ペルージャ','イタリア'],['ミラノ','イタリア・ミラノ','イタリア']],f:[['ノヴァーラ','イタリア・ノヴァーラ','イタリア'],['コネリアーノ','イタリア・コネリアーノ','イタリア'],['ワクフバンク','トルコ・イスタンブール','トルコ']]},
+  '卓球':{m:[['ボルシア・デュッセルドルフ','ドイツ・デュッセルドルフ','ドイツ']],f:[]}
+};
+function contractScene(L,nextSal){
+  const sp=L.sportName,sx=L.sex,cur=L.job.company,tier=L.job.tier||'low';
+  const dom=((PRO_DOM[sp]||{})[sx]||[]).filter(t=>t[0]!==cur);
+  const abr=((PRO_ABROAD[sp]||{})[sx]||[]).filter(t=>t[0]!==cur);
+  const offers=[];
+  dom.slice().sort(()=>R()-.5).slice(0,2).forEach(t=>{if(R()<(tier==='top'?0.6:tier==='mid'?0.4:0.25))offers.push({t,abroad:false,sal:Math.max(300,Math.round(nextSal*(0.9+R()*0.5)))});});
+  if(abr.length&&R()<(tier==='top'?0.5:tier==='mid'?0.15:0.03)){const t=pick(abr);offers.push({t,abroad:true,sal:Math.round(nextSal*(1.2+R()*0.8))});}
+  if(!offers.length)return null;
+  L.stats.add('aPro');
+  const r10=v=>Math.round(v/10)*10;
+  const opts=[opt(`残留: ${cur}`,L=>{L.job.salary=nextSal;turn(L,`${cur}と契約を更新`);return {text:`${cur}と契約を更新した。年収は約${yen(r10(nextSal))}。`};},['local','family'],`年収 約${yen(r10(nextSal))}`,1.5)];
+  offers.forEach(o=>{
+    const [name,place,country]=o.t;
+    opts.push(opt(`${o.abroad?'海外移籍':'国内移籍'}: ${name}(${place})`,L=>{
+      L.job={...L.job,company:name,label:`${name} 選手`,salary:o.sal,inPref:!o.abroad&&cityMuni(place)!=null};
+      if(o.abroad){setLoc(L,{inPref:false,abroad:true,muni:null,label:country});fx(L,{r:-5,k:2,j:2});}
+      else if(cityMuni(place)!=null){const mi=cityMuni(place);setLoc(L,{inPref:true,muni:mi,label:MUNI[mi].city});fx(L,{r:-2,j:1});}
+      else{setLoc(L,{inPref:false,muni:null,label:place});fx(L,{r:-3,j:1});}
+      mark(L,1,o.abroad?'海外移籍':'移籍');turn(L,`${name}へ${o.abroad?'海外':'国内'}移籍`);
+      return {text:`${place}の${name}へ移籍した。年収は約${yen(r10(o.sal))}(仮定)。`,hot:true};
+    },o.abroad?['free','work','learn']:['work','money'],`年収 約${yen(r10(o.sal))}${o.abroad?' / 言葉や暮らしが大きく変わる':''}`));
+  });
+  return scene({title:`${L.age}歳 契約更改`,body:`${cur}での1年が終わりました。来季の契約です。ほかのチームからも話が来ています。`,stats:['aPro'],opts});
 }
 
 function judgeUni(L,u,p){
@@ -1137,7 +1201,7 @@ function newCompany(L){
   if(L.loc.abroad){size='x';co=pickCompany(L,'x',false);}
   else if(L.loc.inPref){size=R()<.3?'l':'s';co=pickCompany(L,size,true,{city:muniOf(L).city,home:size==='s'});}
   else{size=R()<.35?'l':'s';co=pickCompany(L,size,false);}
-  L.job={...makeJob(size,L.loc.inPref,co)};return co;
+  const rk=(L.job&&L.job.rank)||0;L.job={...makeJob(size,L.loc.inPref,co),rank:Math.max(0,rk-1)};return co;
 }
 // 別の土地へ移るときの候補(実在する企業と、その本社がある市区町村)。[企業名, 所在地, 規模]
 const MOVE_DOM=[
@@ -1183,7 +1247,7 @@ function moveScene(L){
     const tag=c.kind==='transfer'?'いまの会社のまま転勤':'転職';
     return opt(`${c.place}: ${c.name}`,L=>{
       L.career=career;fx(L,{r:-4,k:2});
-      L.job=makeJob(c.size,c.inPref,{name:c.name});
+      const rk=(L.job&&L.job.rank)||0;L.job=makeJob(c.size,c.inPref,{name:c.name});L.job.rank=c.kind==='transfer'?rk:Math.max(0,rk-1);
       let to;
       if(c.inPref){const mi=cityMuni(c.place);to={inPref:true,muni:mi,label:MUNI[mi].city};}
       else if(c.abroad)to={inPref:false,abroad:true,muni:null,label:c.country};
@@ -1381,7 +1445,8 @@ function stepYear(){
   if(L.reemp===a)addLog(L,'再雇用の仕事を終えた。','work');
   if(L.age>=L.sched.snow&&!L.snowAsked&&L.loc.inPref&&muniOf(L).snow>=2&&a<=85){L.snowAsked=true;L.stats.add('snowex');Q.push(snowScene(L));}
   if(a===75)Q.push(licenseScene(L));
-  if(L.job&&L.job.athlete){if(a>=L.job.until){L.job.athlete=false;Q.push(proRetireScene(L));}else if(L.job.size==='pro'){L.job.salary=Math.max(300,Math.round(L.job.salary*(1+gauss()*0.15)));}}
+  if(L.job&&L.job.athlete){if(a>=L.job.until){L.job.athlete=false;Q.push(proRetireScene(L));}else if(L.job.size==='pro'){const ns=Math.max(300,Math.round(L.job.salary*(1+gauss()*0.15)));const cs=contractScene(L,ns);if(cs)Q.push(cs);else L.job.salary=ns;}}
+  if(canPromote(L)){const nx=(L.job.rank||0)+1;if(nx<RANKS.length&&a>=RANK_AGE[nx]&&(!L.promoAskedAt||a-L.promoAskedAt>=3)&&R()<RANK_P[nx]*(1+0.04*L.career)*(0.6+L.m.k/150+L.m.r/150))Q.push(promoScene(L));}
   if(L.school&&L.school.type==='univ'&&!L.school.abroad&&a===L.school.end-2&&!L.studyAsked&&abroadOK(L,'study')){L.studyAsked=true;Q.push(studyScene(L));}
   // 出来事
   randomEvents(L);
@@ -1465,6 +1530,10 @@ const OUT_HAZ={
   'ニュージーランド':[['quake',2011,'クライストチャーチ地震。死者185人。'],['quake',2016,'カイコウラ地震(M7.8)。'],['storm',2023,'サイクロン・ガブリエル。北島で大きな被害。'],['volcano',2019,'ファカアリ(ホワイト島)の噴火。死者22人。'],['terror',2019,'クライストチャーチのモスク銃撃事件。死者51人。']],
   'シンガポール':[['haze',2013,'周辺国の森林火災の煙で、大気汚染指数(PSI)が401に。'],['haze',2015,'煙害で学校が休校に。'],['storm',2010,'大雨でオーチャード通りが冠水。'],['unrest',2013,'リトル・インディアの暴動。']],
   'ドイツ':[['storm',2002,'エルベ川の大洪水。'],['storm',2021,'西部の大洪水。死者180人以上。'],['heat',2003,'ヨーロッパの記録的な熱波。'],['unrest',2017,'ハンブルクのG20サミットに対する抗議と衝突。'],['terror',2016,'ベルリンのクリスマスマーケットへのトラック突入。']],
+  'イタリア':[['quake',2009,'ラクイラ地震。死者309人。'],['quake',2016,'イタリア中部地震(アマトリーチェなど)。'],['storm',2023,'エミリア・ロマーニャ州の洪水。'],['heat',2003,'ヨーロッパの記録的な熱波。'],['unrest',2001,'ジェノバのG8サミットに対する抗議と衝突。']],
+  'スペイン':[['storm',2024,'バレンシア州の洪水。死者200人以上。'],['heat',2022,'記録的な熱波。'],['terror',2004,'マドリードの列車爆破テロ。死者193人。'],['terror',2017,'バルセロナでの車の突入。'],['unrest',2017,'カタルーニャ独立をめぐる抗議と衝突。']],
+  'ベルギー':[['storm',2021,'ワロン地域の洪水。'],['terror',2016,'ブリュッセル連続テロ。死者32人。']],
+  'トルコ':[['quake',1999,'イズミット地震。死者約1万7千人。'],['quake',2023,'トルコ・シリア地震。トルコで死者5万人以上。'],['fire',2021,'南部の大規模な山火事。'],['unrest',2013,'イスタンブールのゲジ公園をめぐる抗議。'],['terror',2016,'イスタンブール空港でのテロ。']],
   '台湾':[['quake',1999,'集集地震。死者約2,400人。'],['quake',2016,'台南の地震。ビルが倒壊した。'],['quake',2024,'花蓮の地震(M7.2)。'],['storm',2009,'台風モーラコット。死者約700人。'],['unrest',2014,'学生による立法院の占拠(ひまわり学生運動)。']]
 };
 const OUT_TYPE={quake:['大きな地震',1],storm:['大雨・台風・洪水',1],snow:['大雪・寒波',1],slide:['土砂災害',1],fire:['大規模な火災・山火事',0.7],volcano:['火山の噴火',0.5],heat:['記録的な暑さ',1.5],unrest:['暴動・大規模な抗議デモ',0.7],terror:['テロ・襲撃事件',0.3],haze:['煙害(ひどい大気汚染)',1.5]};
