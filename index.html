@@ -677,9 +677,9 @@ function statusOf(L){
   if(!L.alive)return `${L.deathAge}歳で人生を終えた`;
   const a=L.age;
   if(a<3)return '乳幼児'; if(a<6)return '保育園・幼稚園';
-  if(a<12)return `小学${a-5}年生`; if(a<15)return `中学${a-11}年生`;
+  if(a<12)return `小学${a-5}年生`; if(a<15)return `中学${a-11}年生${L.clubName?'・'+L.clubName:''}`;
   if(L.school){
-    if(L.school.type==='hs')return `${L.school.name} ${Math.min(3,a-14)}年生`;
+    if(L.school.type==='hs')return `${L.school.name} ${Math.min(3,a-14)}年生${L.clubName?'・'+L.clubName:''}`;
     if(L.school.type==='univ')return `${L.school.name}の学生`;
     return `専門学校生(${L.school.inPref?'県内':'県外'})`;
   }
@@ -800,12 +800,28 @@ function likeScene(L){
   return scene({title:'7歳 好きなことが見えてくる',body:'夢中になれることが、少しずつ見えてきました。いちばん好きなのは何でしょう。',
     opts:o.map(x=>opt(x[0],L=>{fx(L,x[1]);L.like=x[3];turn(L,`好きなこと: ${x[0]}`);return {text:`${x[0]}が好きになった。`};},x[2]))});
 }
+// 部活の種類(中学校)。[名前, 競技名(推薦の表示用), 効果, 大事にしていること]
+const CLUBS_SPORT=[['野球部','野球',{h:3,r:3},['local','work']],['サッカー部','サッカー',{h:3,r:3},['health','free']],['バスケットボール部','バスケットボール',{h:3,r:2},['health']],['バレーボール部','バレーボール',{h:3,r:3},['local']],['ソフトテニス部','ソフトテニス',{h:3,r:2},['health']],['陸上競技部','陸上競技',{h:4,r:1},['health','work']],['卓球部','卓球',{h:2,r:2,k:1},['love']],['剣道部','剣道',{h:3,r:2},['learn']],['柔道部','柔道',{h:3,r:2},['health']],['水泳部','水泳',{h:4,r:1},['health']],['スキー部','スキー',{h:4,r:2},['local','free']]];
+const CLUBS_CULTURE=[['吹奏楽部',{j:2,r:3,k:1},['love','local']],['美術部',{j:3,k:1},['love','free']],['科学部',{k:3,j:1},['learn']],['合唱部',{j:2,r:2},['love']],['パソコン部',{k:3},['learn','work']],['書道部',{k:1,j:2},['learn']],['演劇部',{j:2,r:2},['love','free']]];
+const SPORT_LIKE_DEFAULT=['陸上競技','サッカー','水泳','野球','バスケットボール'];
+// 推薦に使う競技名。運動部ならその競技、そうでなければ地域のクラブで続けた競技
+function sportName(L){if(!L.sportName)L.sportName=pick(SPORT_LIKE_DEFAULT);return L.sportName;}
 function clubScene(L){
   return scene({title:'12歳 中学校の部活',body:'中学校に入りました。放課後をどう過ごしますか。',opts:[
-    opt('運動部に入る',L=>{fx(L,{h:3,r:2});L.club='運動部';turn(L,'部活: 運動部');return {text:'運動部に入った。'};},['health','local']),
-    opt('文化部に入る',L=>{fx(L,{k:2,r:2,j:1});L.club='文化部';turn(L,'部活: 文化部');return {text:'文化部に入った。'};},['learn','love']),
-    opt('部活に入らず、地域のクラブや習いごとに通う',L=>{fx(L,{j:2,k:1});L.club='地域';turn(L,'部活に入らず、地域のクラブへ');return {text:'地域のクラブに通いはじめた。'};},['free','love'])
+    opt('運動部に入る(種類を選ぶ)',()=>({next:[clubPickScene(L,'sport')]}),['health','local']),
+    opt('文化部に入る(種類を選ぶ)',()=>({next:[clubPickScene(L,'culture')]}),['learn','love']),
+    opt('部活に入らず、地域のクラブや習いごとに通う',L=>{fx(L,{j:2,k:1});L.club='地域';L.clubName=null;turn(L,'部活に入らず、地域のクラブへ');return {text:'地域のクラブに通いはじめた。'};},['free','love'])
   ]});
+}
+function clubPickScene(L,kind){
+  const snow=MUNI[L.birth].snow>=2;
+  const list=kind==='sport'?CLUBS_SPORT.filter(c=>c[0]!=='スキー部'||snow):CLUBS_CULTURE;
+  const opts=list.map(c=>{
+    const eff=kind==='sport'?c[2]:c[1],vals=kind==='sport'?c[3]:c[2];
+    return opt(c[0],L=>{fx(L,eff);L.club=kind==='sport'?'運動部':'文化部';L.clubName=c[0];if(kind==='sport')L.sportName=c[1];turn(L,`部活: ${c[0]}`);mark(L,1,c[0]);return {text:`${c[0]}に入った。`};},vals,kind==='sport'&&c[0]==='スキー部'?'雪の多い地域ならでは':'');
+  });
+  opts.push(opt('選び直す',()=>({next:[clubScene(L)]}),[],'',0.05));
+  return scene({title:`12歳 ${kind==='sport'?'運動部':'文化部'}を選ぶ`,body:'どの部に入りますか。',opts});
 }
 function hsCandidates(L){
   const m=MUNI[L.birth];const own=m.city;const hub=HUB[m.hub].city;
@@ -836,7 +852,7 @@ function hsScene(L){
     let sp=HS.filter(h=>(h.city===m.city||h.city===HUB[m.hub].city)&&h.dev>=42&&h.dev<=62&&!(L.sex==='m'&&h.girls));
     const pri=sp.filter(h=>h.priv);if(pri.length>=2)sp=pri;
     sp.sort(()=>R()-.5).slice(0,2).forEach(h=>{const s={...h,far:h.city!==m.city,sport:true};
-      opts.unshift(opt(`スポーツ推薦: ${h.name}(偏差値${h.dev})`,L=>enterHS(L,s,0.9),['health'],`${h.kind}${h.priv?'・私立':''} / 推薦・合格しやすい`,1.2+(L.like==='sport'?1:0)));});
+      opts.unshift(opt(`スポーツ推薦(${sportName(L)}): ${h.name}(偏差値${h.dev})`,L=>enterHS(L,s,0.9),['health'],`${h.kind}${h.priv?'・私立':''} / 推薦・合格しやすい`,1.2+(L.like==='sport'?1:0)));});
   }
   if(!opts.length)opts.push(opt('二次募集のある高校(偏差値40)',L=>enterHS(L,{name:'二次募集の高校',city:m.city,dev:40,kind:'普通',far:false},1),[],'普通 / 合格しやすい'));
   let body=`いまの自分の偏差値は、おおよそ${my.toFixed(1)}。合格しやすさは、偏差値の差から計算した目安です。受験できるのは1回だけで、不合格なら偏差値に見合う学校に進みます。`;
@@ -859,7 +875,7 @@ function enterHS(L,s,p){
     return {text:`${s.name}は不合格だった。偏差値に見合う${t.name}(偏差値${t.dev})に進むことになった。`,hot:true};
   }
   L.school={type:'hs',name:s.name,end:18,inPref:true};L.hsName=s.name;
-  if(s.sport){L.sportRec=true;fx(L,{h:3,r:2});turn(L,'スポーツ推薦で進学');}
+  if(s.sport){L.sportRec=true;fx(L,{h:3,r:2});turn(L,`${sportName(L)}のスポーツ推薦で進学`);addLog(L,`${sportName(L)}のスポーツ推薦で、${s.name}に進むことになった。`,'learn',true);}
   L.hsTrack=(s.kind.startsWith('普通')||s.dev>=60)?'academic':'voc';
   fx(L,{k:4+Math.max(0,s.dev-45)*0.35,r:4,j:s.dev>=65?0:3});
   if(s.far)fx(L,{h:-1,j:-1});
@@ -880,7 +896,7 @@ function pathScene(L){
     job18Opt(L,true,'県内で就職',['money','local','family'],wj),
     ...(abroadOK(L,'uni')?[opt('海外の大学',()=>({next:[abroadUniScene(L)]}),['free','learn','work'],L.school&&L.school.abroad?'海外の高校から':'',L.school&&L.school.abroad?2.5:0.6)]:[]),
     job18Opt(L,false,'県外で就職',['money','free','work'],wj*0.35),
-    ...(sportScore(L)>=7?[opt('スポーツ推薦で大学へ',()=>({next:[sportUniScene(L)]}),['health','love'],'推薦の話が来ている',1.5)]:[])
+    ...(sportScore(L)>=7?[opt(`スポーツ推薦(${sportName(L)})で大学へ`,()=>({next:[sportUniScene(L)]}),['health','love'],'推薦の話が来ている',1.5)]:[])
   ]});
 }
 // スポーツ推薦(ゲーム上の仮定): 運動を重点にした年数・運動部・好きなこと・健康から「競技の力」を出す
@@ -901,9 +917,9 @@ function sportUniScene(L){
   const names=['日本大学','東洋大学','法政大学','中央大学','明治大学','早稲田大学','亜細亜大学','白鴎大学','常磐大学','獨協大学'];
   const all=[];for(const r in UNI_OUT)for(const a of UNI_OUT[r])if(names.includes(a[0]))all.push({name:a[0],lo:a[1],hi:a[2],city:a[3],inPref:false});
   const list=all.sort(()=>R()-.5).slice(0,3);
-  const opts=list.map(u=>opt(`${u.name}(偏差値${u.lo}〜${u.hi})`,L=>{const r=judgeUni(L,u,p);if(L.school&&L.school.name===u.name){fx(L,{h:2,r:2});turn(L,'スポーツ推薦で大学へ');}return r;},[],`推薦 / ${passLabel(p)}`));
+  const opts=list.map(u=>opt(`${u.name}(偏差値${u.lo}〜${u.hi})`,L=>{const r=judgeUni(L,u,p);if(L.school&&L.school.name===u.name){fx(L,{h:2,r:2});turn(L,`${sportName(L)}のスポーツ推薦で大学へ`);}return r;},[],`推薦 / ${passLabel(p)}`));
   opts.push(opt('推薦は受けず、進路を選び直す',()=>({next:[pathScene(L)]}),[],'',0.1));
-  return scene({title:'スポーツ推薦の話',body:'続けてきた競技を見てくれていた大学から、推薦の話が来ました。合否は学力試験ではなく、競技の実績と面接で決まります。',stats:['aSport','unidev'],opts});
+  return scene({title:`スポーツ推薦(${sportName(L)})の話`,body:`続けてきた${sportName(L)}を見てくれていた大学から、推薦の話が来ました。合否は学力試験ではなく、競技の実績と面接で決まります。`,stats:['aSport','unidev'],opts});
 }
 function regionScene(L){
   return scene({title:'県外の大学 地域を選ぶ',body:'どの地域の大学を受けますか。',opts:[
@@ -1371,6 +1387,7 @@ function minorEvent(L){
   if(a>=3&&a<=12&&L.loc.inPref&&m.snow>=1)add(2,()=>{fx(L,{j:2});return pick(['大きな雪だるまを作った。','屋根から落ちた雪の山を、すべり台にして遊んだ。','雪の朝、長靴で通学路を歩いた。']);});
   if(a>=4&&a<=16&&L.loc.inPref)add(2,()=>{fx(L,{j:1});return LAND[m.name]||LAND_REG[regionOf(m)];});
   if(a>=8&&a<=14)add(1,()=>{fx(L,{r:2});return pick(['運動会で、思っていたより速く走れた。','夏休みに、祖父母の家で過ごした。','友だちと秘密の場所を見つけた。']);});
+  if(a>=12&&a<=17&&L.clubName)add(1.4,()=>{fx(L,{r:2,j:1});return pick([`${L.clubName}の大会に出た。`,`${L.clubName}の仲間と、遅くまで練習した。`,`${L.clubName}で、後輩ができた。`]);});
   if(a>=8&&a<=14&&L.like)add(1,()=>{fx(L,{j:2,k:1});return {sport:'外で走り回るのが、ますます好きになった。',art:'描いた絵が、教室に飾られた。',music:'発表会で、歌を披露した。',book:'図書館の本を、たくさん借りた。',nature:'川で、めずらしい生き物を見つけた。',game:'難しいパズルを、ひとりで解けた。'}[L.like];});
   if(a>=25&&a<=60)add(1,()=>{fx(L,{r:3,j:1});mark(L,2,'再会');return '同級生と、久しぶりに再会した。';});
   if(a>=25&&a<=38)add(1,()=>{fx(L,{j:1});return pick(['友人の結婚式に出た。','友人に子どもが生まれたと聞いた。']);});
