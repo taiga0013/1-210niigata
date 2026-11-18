@@ -304,7 +304,7 @@ table.rec th{color:var(--muted);font-weight:500;font-size:12px}
         <div class="scene" id="scene"></div>
         <div class="panel"><div class="label">家と家族</div><div id="family"></div></div>
         <div class="panel"><div class="label">今年の重点<span>いつでも変えられます</span></div><div class="focus" id="focus"></div></div>
-        <div class="money"><div class="panel"><div class="label">総資産<span>万円</span></div><div class="mbox" id="assets"></div></div><div class="panel"><div class="label">年収<span>万円・額面</span></div><div class="mbox" id="income"></div></div></div>
+        <div class="money"><div class="panel"><div class="label">総資産</div><div class="mbox" id="assets"></div></div><div class="panel"><div class="label">年収<span>額面</span></div><div class="mbox" id="income"></div></div></div>
         <div class="panel"><div class="label">4つのメーター<span>直接は動かせません</span></div><div class="meters" id="meters"></div></div>
         <div class="panel"><div class="label">速度</div><div class="speed" id="speed"></div><div class="prog"><i id="prog"></i></div></div>
       </div>
@@ -336,6 +336,15 @@ function gauss(){let u=0,v=0;while(!u)u=R();while(!v)v=R();return Math.sqrt(-2*M
 function wpick(items,wf){let t=0;const ws=items.map(x=>{const w=Math.max(0,wf(x));t+=w;return w});let r=R()*t;for(let i=0;i<items.length;i++){r-=ws[i];if(r<=0)return items[i];}return items[items.length-1];}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmt=n=>Math.round(n).toLocaleString('ja-JP');
+// 例: 12345.6 → 1億2,346万円 / 20000 → 2億円 / 350 → 350万円 / 0.4 → 4,000円 / -80 → −80万円
+function yen(man){
+  if(man==null||isNaN(man))return '—';
+  const neg=man<0;let v=Math.abs(man);let t;
+  if(v>=10000){const oku=Math.floor(v/10000);const m=Math.round(v-oku*10000);t=m>=10000?(oku+1)+'億円':m?fmt(oku)+'億'+fmt(m)+'万円':fmt(oku)+'億円';}
+  else if(v>=1){const m=Math.round(v);t=m>=10000?'1億円':fmt(m)+'万円';}
+  else{const e=Math.round(v*10000);t=e?fmt(e)+'円':'0円';}
+  return (neg&&t!=='0円'?'−':'')+t;
+}
 const BIRTH_YEAR=2027;
 
 /* ============ データ ============ */
@@ -1037,11 +1046,11 @@ function moveScene(L){
       else to={inPref:false,muni:null,label:c.place};
       setLoc(L,to);mark(L,0,c.kind==='transfer'?'転勤':'転職');
       turn(L,`${c.place}の${c.name}へ(${tag})`);
-      return {text:`${c.place}の${c.name}に移った(${tag})。年収は約${w}万円の見込み(額面)。`,hot:true};
-    },c.abroad?['free','learn','work']:c.inPref?['family','local']:['work','free','money'],`${tag} / 年収 約${w}万円`,c.kind==='transfer'?1.5:1);
+      return {text:`${c.place}の${c.name}に移った(${tag})。年収は約${yen(w)}の見込み(額面)。`,hot:true};
+    },c.abroad?['free','learn','work']:c.inPref?['family','local']:['work','free','money'],`${tag} / 年収 約${yen(w)}`,c.kind==='transfer'?1.5:1);
   });
   opts.push(opt('やっぱり移らない',()=>({next:[transferScene(L)]}),[],'',0.05));
-  return scene({title:`${L.age}歳 移る先を選ぶ`,body:`いま(${L.loc.label}・年収 約${Math.round(L.income/10)*10}万円)から移る先の候補です。企業も地名も実在のものですが、年収は賃金統計と仮定からの試算で、その企業の実際の給与ではありません。`,stats:['aCompany','wage','migr'],opts});
+  return scene({title:`${L.age}歳 移る先を選ぶ`,body:`いま(${L.loc.label}・年収 約${yen(Math.round(L.income/10)*10)})から移る先の候補です。企業も地名も実在のものですが、年収は賃金統計と仮定からの試算で、その企業の実際の給与ではありません。`,stats:['aCompany','wage','migr'],opts});
 }
 function cityMuni(city){const m=city==='新潟市'?MI['新潟市中央区']:MI[city];return m?m.i:null;}
 function office(city){return city+(/[町村]$/.test(city)?'役場':'役所');}
@@ -1058,7 +1067,7 @@ function pickCompany(L,size,inPref,o){
   const c=pick(size==='l'?(o.hs?CO.outL18:CO.outL):CO.outS);return {name:c[0],place:c[1],generic:size==='s'};
 }
 function makeJob(size,inPref,co){return {size,inPref,company:co.name,label:`${co.name} 勤務`};}
-function coNote(co,L,edu,size){return `${co.generic?'業種の例 / ':size==='p'?'実在の機関 / ':co.near?`実在の企業(${co.place}) / `:'実在の企業 / '}初年度 年収 約${estWage(L,edu,size)}万円`;}
+function coNote(co,L,edu,size){return `${co.generic?'業種の例 / ':size==='p'?'実在の機関 / ':co.near?`実在の企業(${co.place}) / `:'実在の企業 / '}初年度 年収 約${yen(estWage(L,edu,size))}`;}
 function pre18(L,inPref){const size=R()<(inPref?0.3:0.4)?'l':'s';return {size,co:pickCompany(L,size,inPref,{hs:true,city:MUNI[L.birth].city,home:inPref&&size==='s'})};}
 function job18Opt(L,inPref,label,v,w){const pr=pre18(L,inPref);return opt(`${label}: ${pr.co.name}`,L=>startJob18(L,inPref,pr),v,coNote(pr.co,L,'hs',pr.size),w);}
 function startJob18(L,inPref,pr){
@@ -1068,7 +1077,7 @@ function startJob18(L,inPref,pr){
   if(inPref){const mi=size==='s'?(L.loc.inPref?L.loc.muni:L.birth):cityMuni(co.place);beginWork(L,job,{inPref:true,muni:mi,label:MUNI[mi].city});}
   else{beginWork(L,job,{inPref:false,muni:null,label:co.place});fx(L,{r:-6});addLog(L,`${co.place}で働きはじめた。`,'home');}
   turn(L,`${co.name}に就職(${inPref?'県内':'県外'})`);
-  return {text:`${co.name}に就職した。初年度の年収は約${estWage(L,L.edu,size)}万円(額面)。`,hot:true};
+  return {text:`${co.name}に就職した。初年度の年収は約${yen(estWage(L,L.edu,size))}(額面)。`,hot:true};
 }
 // 就職したときの年収の見込み(額面、10万円単位)
 function estWage(L,edu,size){const e=L.edu,j=L.job,c=L.career;L.edu=edu;L.job={size};L.career=0;const w=wageBase(L);L.edu=e;L.job=j;L.career=c;return Math.round(w/10)*10;}
@@ -1087,7 +1096,7 @@ function gradScene(L){
     beginWork(L,job,loc);
     if(!inPref&&wasIn){fx(L,{r:-6});addLog(L,size==='x'?`${co.place}で働くため、日本を離れた。`:'県外で働くため、新潟を離れた。','home');}
     turn(L,`${kind}を卒業し、${co.name}に就職`);
-    return {text:`${kind}を卒業し、${co.name}に就職した。初年度の年収は約${estWage(L,L.edu,size)}万円(額面)。`,hot:true};
+    return {text:`${kind}を卒業し、${co.name}に就職した。初年度の年収は約${yen(estWage(L,L.edu,size))}(額面)。`,hot:true};
   };
   const cHome=pickCompany(L,'s',true,{city:home.city,home:true}),cInL=pickCompany(L,'l',true,{city:home.city}),cP=pickCompany(L,'p',true,{city:home.city}),cOutL=pickCompany(L,'l',false),cOutS=pickCompany(L,'s',false);
   const cX=abroadOK(L,'job')?pickCompany(L,'x',false):null;
@@ -1119,7 +1128,7 @@ function transferScene(L){
 function houseScene(L){
   const cost=L.loc.inPref?3000:4200;
   const o=[
-    opt(`家を買う(住宅ローン ${fmt(cost)}万円)`,L=>{L.ownHouse=true;L.home='own';L.savings-=300;L.loan=cost;L.loanPay=Math.round(cost/0.85/32);fx(L,{j:3});turn(L,'家を買った');mark(L,0,'家');L.stats.add('aMoney');return {text:'家を買った。35年近いローンがはじまった。',hot:true};},['family','money'],'',L.married?1.6:0.5),
+    opt(`家を買う(住宅ローン ${yen(cost)})`,L=>{L.ownHouse=true;L.home='own';L.savings-=300;L.loan=cost;L.loanPay=Math.round(cost/0.85/32);fx(L,{j:3});turn(L,'家を買った');mark(L,0,'家');L.stats.add('aMoney');return {text:'家を買った。35年近いローンがはじまった。',hot:true};},['family','money'],'',L.married?1.6:0.5),
     opt('借りたまま暮らす',L=>{fx(L,{j:1});turn(L,'借りて暮らし続けた');return {text:'借りて暮らし続けることにした。'};},['free'])
   ];
   if(L.parents.some(p=>p.alive))o.push(opt('実家に戻って暮らす',L=>{L.home='family';const h=MUNI[L.birth];setLoc(L,{inPref:true,muni:h.i,label:h.city});fx(L,{r:2,j:-1});turn(L,'実家に戻った');mark(L,0,'実家');return {text:'実家に戻って暮らしはじめた。'};},['family','local','money'],'',0.6));
@@ -1142,7 +1151,7 @@ function retireScene(L){
   ]});
 }
 function retire(L){
-  if(L.job&&L.workStart!=null){const yrs=L.age-L.workStart;const per=L.job.size==='l'?40:L.job.size==='p'?38:18;L.savings+=yrs*per;addLog(L,`退職金として約${fmt(yrs*per)}万円を受け取った(仮定)。`,'work');}
+  if(L.job&&L.workStart!=null){const yrs=L.age-L.workStart;const per=L.job.size==='l'?40:L.job.size==='p'?38:18;L.savings+=yrs*per;addLog(L,`退職金として約${yen(yrs*per)}を受け取った(仮定)。`,'work');}
   L.retired=true;L.unemp=false;setRole(L,'retired');mark(L,1,'退職');L.focus=defaultFocus(L);
 }
 function snowScene(L){
@@ -1516,14 +1525,14 @@ function renderPlay(){
 }
 function assetsHTML(L){
   const sv=L.savings,nw=netWorth(L);
-  return `<b class="num ${sv<0?'neg':''}">${fmt(sv)}</b><span class="tiny muted">${sv<0?'貯金より借りたお金(奨学金など)が多い状態':'預貯金など(住まいの価値はふくめない)'}</span>
-   <dl><dt>住宅ローンの残り</dt><dd>${L.loan>0?'−'+fmt(L.loan):'なし'}</dd><dt>差し引き(純資産)</dt><dd>${fmt(nw)}</dd><dt>今年の増減</dt><dd>${L.netFlow==null||L.age<15?'—':(L.netFlow>=0?'+':'')+fmt(L.netFlow)}</dd></dl>`;
+  return `<b class="num ${sv<0?'neg':''}">${yen(sv)}</b><span class="tiny muted">${sv<0?'貯金より借りたお金(奨学金など)が多い状態':'預貯金など(住まいの価値はふくめない)'}</span>
+   <dl><dt>住宅ローンの残り</dt><dd>${L.loan>0?'−'+yen(L.loan):'なし'}</dd><dt>差し引き(純資産)</dt><dd>${yen(nw)}</dd><dt>今年の増減</dt><dd>${L.netFlow==null||L.age<15?'—':(L.netFlow>=0?'+':'')+yen(L.netFlow)}</dd></dl>`;
 }
 function incomeHTML(L){
   const st=stageOf(L);const pen=L.incPension||0;const work=Math.max(0,L.income-pen);
   let note=L.age<15?'まだ働いていません':st==='student'?'学生(アルバイトなど)':L.unemp?'求職中(失業給付などの目安)':st==='senior'?'退職後':'賃金統計からの試算';
-  return `<b class="num">${fmt(L.income)}</b><span class="tiny muted">${note}</span>
-   <dl><dt>働いて得た分</dt><dd>${fmt(work)}</dd><dt>年金</dt><dd>${pen?fmt(pen):'—'}</dd><dt>これまでの最高</dt><dd>${L.maxIncome?fmt(L.maxIncome)+'('+L.maxIncomeAge+'歳)':'—'}</dd></dl>`;
+  return `<b class="num">${yen(L.income)}</b><span class="tiny muted">${note}</span>
+   <dl><dt>働いて得た分</dt><dd>${yen(work)}</dd><dt>年金</dt><dd>${pen?yen(pen):'—'}</dd><dt>これまでの最高</dt><dd>${L.maxIncome?yen(L.maxIncome)+'('+L.maxIncomeAge+'歳)':'—'}</dd></dl>`;
 }
 function lifeMapSVG(L,full){
   const end=L.alive?Math.max(90,L.age+5):Math.max(L.deathAge+2,60);const X=Math.min(112,end);
@@ -1565,7 +1574,7 @@ function achieved(L){
 function resultText(L){
   const m=MUNI[L.birth];
   return `210万分の1 ― ${m.name}で${BIRTH_YEAR}年に生まれた${L.name}さん(${L.sex==='m'?'男性':'女性'})は、${L.deathAge}歳で人生を終えました(死因の分類: ${L.cause})。`+
-   `${L.hsName?`高校は${L.hsName}。`:''}${L.everOut?'県外で暮らした時期があった。':'一生を新潟県内で暮らした。'}${L.married||L.divorced?'結婚を経験し、':''}${L.kids.length?`子どもは${L.kids.length}人。`:''}災害に${L.disasters}回あった。生まれた環境は5段階の${envRate(L.P).lv}。最後の総資産は約${fmt(L.savings)}万円、いちばん多かった年収は約${fmt(L.maxIncome||0)}万円。`+
+   `${L.hsName?`高校は${L.hsName}。`:''}${L.everOut?'県外で暮らした時期があった。':'一生を新潟県内で暮らした。'}${L.married||L.divorced?'結婚を経験し、':''}${L.kids.length?`子どもは${L.kids.length}人。`:''}災害に${L.disasters}回あった。生まれた環境は5段階の${envRate(L.P).lv}。最後の総資産は約${yen(L.savings)}、いちばん多かった年収は約${yen(L.maxIncome||0)}。`+
    `\n※数字は公的統計と仮定を組み合わせた試算で、個人の将来の予測ではありません。`;
 }
 function showEnd(){
@@ -1588,7 +1597,7 @@ function showEnd(){
     <div class="panel"><h2 class="section-title">最後にこの人へ声をかけるなら</h2><div class="words" id="words">${['おつかれさま','ありがとう','いい人生だったね','またどこかで'].map(w=>`<button type="button" aria-pressed="false">${w}</button>`).join('')}</div><p class="small muted" id="word-msg" style="margin-top:8px"></p></div>
     <div class="panel"><h2 class="section-title">最後の状態</h2>
       <div class="meters">${['h','j','k','r'].map(k=>{const v=Math.round(L.m[k]);return `<div class="meter ${v<30?'low':''}"><span>${MNAME[k]}</span><div class="bar"><i style="width:${v}%"></i></div><span class="v">${v}</span></div>`;}).join('')}</div>
-      <div class="money" style="margin-top:12px"><div class="panel"><div class="label">総資産<span>万円</span></div><div class="mbox">${assetsHTML(L)}</div></div><div class="panel"><div class="label">最後の年の年収<span>万円・額面</span></div><div class="mbox">${incomeHTML(L)}</div></div></div>
+      <div class="money" style="margin-top:12px"><div class="panel"><div class="label">総資産</div><div class="mbox">${assetsHTML(L)}</div></div><div class="panel"><div class="label">最後の年の年収<span>額面</span></div><div class="mbox">${incomeHTML(L)}</div></div></div>
       <p class="small" style="margin-top:10px">生まれた環境 ${starsHTML(envRate(L.P).lv)} ${envRate(L.P).label} ・ 最後の住まい ${esc(L.loc.label)}(${L.loc.abroad?'海外':L.loc.inPref?'県内':'県外'}) ・ ${L.married&&L.spouseAlive?'連れ合いがいた':L.married?'連れ合いに先立たれていた':L.divorced?'離婚を経験':'結婚はしなかった'} ・ 子ども${L.kids.length}人 ・ 災害${L.disasters}回</p></div>
     <div class="panel"><h2 class="section-title">人生地図</h2>${lifeMapSVG(L,true)}</div>
     <div class="panel"><h2 class="section-title">人生の転機</h2><ul class="turns">${L.turns.length?L.turns.map(t=>`<li><em>${t.age}歳</em><span>${esc(t.text)}</span></li>`).join(''):'<li><em></em><span>大きな分かれ道を迎える前でした。</span></li>'}</ul></div>
@@ -1615,7 +1624,7 @@ function showRec(){
   const r=loadRec();
   $('s-rec').innerHTML=`<p class="eyebrow">記録</p><h1 style="font-size:32px;margin-top:6px">これまでの人生</h1>
   <p class="small muted" style="margin-top:8px">記録はこのブラウザにだけ残ります。ほかの端末や、ほかの人には送られません。</p>
-  <div class="panel" style="margin-top:20px"><h2 class="section-title">直近10回の人生</h2>${r.lives.length?`<div class="tablewrap"><table class="rec"><thead><tr><th>日付</th><th>名前</th><th>出生地</th><th>環境</th><th>年齢</th><th>総資産</th><th>最高年収</th><th>死因の分類</th><th>ひとこと</th></tr></thead><tbody>${r.lives.map(l=>`<tr><td class="num">${esc(l.d)}</td><td>${esc(l.name)}</td><td>${esc(l.muni)}</td><td>${l.env?starsHTML(l.env):'—'}</td><td class="num">${l.age}歳</td><td class="num">${l.assets!=null?fmt(l.assets)+'万円':'—'}</td><td class="num">${l.maxInc?fmt(l.maxInc)+'万円':'—'}</td><td>${esc(l.cause)}</td><td>${esc(l.word||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted">まだ記録がありません。最初の人生を終えると、ここに残ります。</p>'}</div>
+  <div class="panel" style="margin-top:20px"><h2 class="section-title">直近10回の人生</h2>${r.lives.length?`<div class="tablewrap"><table class="rec"><thead><tr><th>日付</th><th>名前</th><th>出生地</th><th>環境</th><th>年齢</th><th>総資産</th><th>最高年収</th><th>死因の分類</th><th>ひとこと</th></tr></thead><tbody>${r.lives.map(l=>`<tr><td class="num">${esc(l.d)}</td><td>${esc(l.name)}</td><td>${esc(l.muni)}</td><td>${l.env?starsHTML(l.env):'—'}</td><td class="num">${l.age}歳</td><td class="num">${l.assets!=null?yen(l.assets):'—'}</td><td class="num">${l.maxInc?yen(l.maxInc):'—'}</td><td>${esc(l.cause)}</td><td>${esc(l.word||'—')}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted">まだ記録がありません。最初の人生を終えると、ここに残ります。</p>'}</div>
   <div class="panel" style="margin-top:24px"><h2 class="section-title">実績</h2><div class="achs">${ACH.map(a=>`<div class="ach ${r.ach[a[0]]?'on':'off'}"><b>${a[1]}</b>${a[2]}${r.ach[a[0]]?` ・ ${r.ach[a[0]]}回`:''}</div>`).join('')}</div></div>
   <div class="panel" style="margin-top:24px"><h2 class="section-title">図鑑</h2>
    <p class="small" style="margin-bottom:6px">生まれた市町村(${Object.keys(r.zukan.muni).length}/${MUNI.length})</p><div class="zukan">${MUNI.map(m=>`<span class="${r.zukan.muni[m.name]?'on':''}">${m.name}</span>`).join('')}</div>
