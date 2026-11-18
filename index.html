@@ -572,6 +572,9 @@ const STAT={
   payJ:['real','Jクラブの年俸は、Jリーグ「2025年度 クラブ決算一覧」の各クラブのトップチーム人件費(例: 浦和32.7億円、町田32.4億円、八戸1.7億円)から計算。岡山は5か月決算のため12か月分に直しています。'],
   payEU:['real','欧州クラブの年俸は、ブンデスリーガはDFLが公表した各クラブの人件費、リーグ・アンはDNCGが公表した人件費(2024/25)、セリエAはCalcio e Finanzaの選手年俸総額(2025/26)、プレミアリーグとラ・リーガはCapologyの選手年俸の推計(2024-25)から計算。'],
   aPay:['assume','人件費のうち選手の分(Jリーグ・DFL・DNCGは6割、選手年俸だけの値は全額)を30人で割って平均年俸とし、選手の格で上位2.2倍・中位1倍・下位0.35倍(最低300万円)にしています。1ユーロ=165円。値のない昇格クラブ(リーズ、サンダーランド、コヴェントリー、ハル、エルチェ、レバンテ、ラシン、デポルティーボ、マラガ、フロジノーネ、ロリアン、パリFC、トロワ、ル・マン)は同じリーグで最も少ないクラブの値で代用しています。'],
+  retJ:['real','プロ野球(NPB)の2025年の戦力外・現役引退選手は平均27.2歳、平均在籍6.8年(NPBの進路調査)。Jリーグの平均引退年齢は26.0歳(2022年、Jリーグ選手会公表として報道)。'],
+  teinen:['real','定年を一律に定めている企業の定年年齢は、60歳72.3%、65歳21.1%、66歳以上3.5%(厚生労働省 就労条件総合調査、令和4年)。公務員の定年は2031年度までに65歳へ引き上げ。65歳までの雇用確保は法律で企業の義務。'],
+  aRet:['assume','選手の格による引退年齢の差(上位+3歳・中位−0.5歳・下位−3歳。ゲーム内でプロになる人の平均が統計に近づくように調整)とばらつき(標準偏差2.5歳)は仮定。野球とサッカー以外の競技は公表値がないため、2つの平均(26.6歳)で代用しています。'],
   aAch:['assume','実績の中身はゲーム上の決まりです。'],
   aSport:['assume','スポーツ推薦は、運動や部活を重点にした年数・運動部・好きなこと・健康から出す「競技の力」で声がかかる仮定です。推薦先の学校は候補からの抽選で、実際の推薦枠を示すものではありません。高校は合格しやすさ90%、大学は50〜90%としています。'],
   snowex:['real','令和2年度の大雪では県内で死者21人、死傷者364人。屋根の雪下ろし中の事故が多くを占めました。']
@@ -1062,7 +1065,7 @@ function proTeamScene(L){
   const opts=proTeams(L).map(t=>{
     const r=R();const tier=r<0.05?'top':r<0.35?'mid':'low';
     const sal=clubSalary(t[0],tier)??(tier==='top'?ri(1500,3000):tier==='mid'?ri(800,1500):ri(400,800));
-    const until=L.age+(tier==='top'?ri(12,17):tier==='mid'?ri(8,13):ri(4,9));
+    const until=athleteRetireAge(L,tier);
     const note=sp.kind==='pro'?`プロ契約 / 1年目の年収 約${yen(Math.round(sal/10)*10)}`:'会社員として競技を続ける / 年収は会社の給与';
     return opt(`${t[0]}(${t[1]})`,L=>{
       const inPref=cityMuni(t[1])!=null;
@@ -1078,7 +1081,7 @@ function proTeamScene(L){
 }
 function proRetireScene(L){
   const team=L.job.company;
-  return scene({title:`${L.age}歳 現役引退`,body:`${team}で${L.sportName}の選手として過ごした日々が終わります。これからの仕事を選びます。`,stats:['aPro'],opts:[
+  return scene({title:`${L.age}歳 現役引退`,body:`${team}で${L.sportName}の選手として過ごした日々が終わります。これからの仕事を選びます。`,stats:['retJ','aRet'],opts:[
     opt(`${team}に残り、指導者・スタッフになる`,L=>{L.job={...L.job,size:'p',label:`${team} スタッフ`,athlete:false};L.retiredAthlete=true;turn(L,'現役を引退し、チームのスタッフに');return {text:'現役を引退し、チームのスタッフになった。',hot:true};},['love','local']),
     opt('一般の会社に就職する',L=>{const co=newCompany(L);L.retiredAthlete=true;turn(L,`現役を引退し、${co.name}に就職`);return {text:`現役を引退し、${co.name}で働きはじめた。`,hot:true};},['work','money']),
     opt('ふるさとに戻って働く',L=>{const h=MUNI[L.birth];setLoc(L,{inPref:true,muni:h.i,label:h.city});const co=newCompany(L);L.retiredAthlete=true;turn(L,`引退して、ふるさとの${co.name}へ`);return {text:`ふるさとに戻り、${co.name}で働きはじめた。`,hot:true};},['family','local'])
@@ -1091,7 +1094,7 @@ const RANKS=['','主任','係長','課長','部長','役員'];
 const RANK_MULT=[1,1.05,1.12,1.3,1.55,2.2];
 const RANK_AGE=[0,27,32,38,45,52];
 const RANK_P=[0,0.14,0.09,0.05,0.025,0.006];
-function canPromote(L){return L.job&&!L.job.athlete&&L.job.size!=='pro'&&!L.unemp&&!L.retired&&L.age<60;}
+function canPromote(L){return L.job&&!L.job.athlete&&L.job.size!=='pro'&&!L.unemp&&!L.retired&&L.age<teinenOf(L);}
 function promoScene(L){
   const cur=L.job.rank||0,nx=cur+1;
   const now=Math.round(wageBase(L)/10)*10;
@@ -1196,7 +1199,7 @@ function buildOffers(L){
 }
 function joinPro(L,o,dropout){
   const sp=PRO[L.sportName]||{kind:'pro'};const tier=o.tier;
-  const until=L.age+(tier==='top'?ri(12,17):tier==='mid'?ri(8,13):ri(4,9));
+  const until=athleteRetireAge(L,tier);
   const inPref=!o.abroad&&cityMuni(o.place)!=null;
   if(dropout)L.edu='hs';
   L.school=null;L.roninNow=false;L.youth=null;if(L.edu==='univ_pending'||!L.edu||L.edu==='none')L.edu=L.edu==='univ_pending'?'univ':'hs';
@@ -1258,6 +1261,24 @@ const EUR_YEN=165;
 // 選手1人あたりの平均年俸(万円) = 人件費 × 選手の分 ÷ 30人
 function clubAvgMan(name){const d=CLUB_PAY[name];if(!d)return null;const man=d[0]==='J'?d[1]*100:d[1]*1e6*EUR_YEN/1e4;return man*PAY_SHARE[d[0]]/30;}
 function clubSalary(name,tier){const a=clubAvgMan(name);if(a==null)return null;const f=tier==='top'?2.2:tier==='mid'?1:0.35;return Math.max(300,Math.round(a*f*(0.85+R()*0.3)));}
+/* ---------- 引退・定年の年齢(実際の統計) ----------
+   選手: NPBの2025年 戦力外・現役引退選手の平均年齢27.2歳(平均在籍6.8年)、Jリーグ選手会公表の平均引退年齢26.0歳(2022年)。
+   ほかの競技は公表値がないため、この2つの平均(26.6歳)で代用。格による差(上位+3歳、中位−0.5歳、下位−3歳)とばらつき(標準偏差2.5歳)は仮定。
+   会社員: 就労条件総合調査(令和4年)の一律定年の企業の割合 60歳72.3%・61〜64歳3.1%・65歳21.1%・66歳以上3.5%。公務員は65歳(国家公務員・地方公務員とも2031年度までに65歳へ引き上げ)。 */
+const RETIRE_MEAN={'野球':27.2,'サッカー':26.0};
+function athleteRetireAge(L,tier){
+  // CAL: ゲーム内でプロになる人の格の偏りを打ち消し、競技ごとの平均が統計値に近づくようにする補正(シミュレーションで調整)
+  const CAL={'野球':2.5,'サッカー':-0.2};
+  const m=(RETIRE_MEAN[L.sportName]||26.6)+(CAL[L.sportName]??1.5);const sh=tier==='top'?3:tier==='mid'?-0.5:-3;
+  return Math.max(L.age+1,Math.round(m+sh+gauss()*2.5));
+}
+function teinenOf(L){
+  if(L.teinen==null||L.teinenFor!==(L.job&&L.job.company)){
+    L.teinenFor=L.job&&L.job.company;
+    L.teinen=(L.job&&L.job.size==='p')?65:wpick([[60,72.3],[ri(61,64),3.1],[65,21.1],[ri(66,70),3.5]],x=>x[1])[0];
+  }
+  return L.teinen;
+}
 function judgeUni(L,u,p){
   if(R()<p){
     L.school={type:'univ',name:u.name,end:L.age+4,inPref:u.inPref,city:u.city||u.muni,abroad:!!u.abroad};
@@ -1470,9 +1491,10 @@ function careScene(L,p){
   return scene({title:`${L.age}歳 親の介護`,body:`${p.role}(${p.age}歳)の暮らしに、手助けが必要になってきました。${L.loc.inPref?'':'離れて暮らしているので、通うにも時間がかかります。'}`,stats:['aCare','aged'],opts:o});
 }
 function retireScene(L){
-  return scene({title:'60歳 定年',body:'定年の年を迎えました。これからの働き方を決めます。',stats:['aMoney'],opts:[
-    opt('定年で退職する',L=>{retire(L);fx(L,{j:2});turn(L,'60歳で退職');return {text:'定年で退職した。'};},['free','health','family']),
-    opt('再雇用で65歳まで働く',L=>{retire(L);L.reemp=65;turn(L,'再雇用で65歳まで勤務');return {text:'再雇用で働き続けることにした。'};},['work','money'],'',1.4),
+  const a=L.age,ext=a<65?65:70;
+  return scene({title:`${a}歳 定年`,body:`${L.job.company||'勤め先'}の定年(${a}歳)を迎えました。これからの働き方を決めます。`,stats:['teinen','aMoney'],opts:[
+    opt('定年で退職する',L=>{retire(L);fx(L,{j:2});turn(L,`${L.age}歳で定年退職`);return {text:'定年で退職した。'};},['free','health','family']),
+    opt(`${a<65?'再雇用':'継続雇用'}で${ext}歳まで働く`,L=>{retire(L);L.reemp=ext;turn(L,`${a<65?'再雇用':'継続雇用'}で${ext}歳まで勤務`);return {text:'定年のあとも働き続けることにした。'};},['work','money'],'',1.4),
     opt('地域の仕事をはじめる',L=>{retire(L);L.localJob=70;fx(L,{r:3});turn(L,'地域の仕事をはじめた');return {text:'地域の仕事をはじめた。'};},['local'])
   ]});
 }
@@ -1558,9 +1580,9 @@ function stepYear(){
   if(working&&L.unemp&&a>L.unempAt){L.unemp=false;const co=newCompany(L);addLog(L,`${co.name}で新しく働きはじめた。`,'work');turn(L,`${co.name}で再就職`);}
   if(a>=L.sched.house&&a<=38&&!L.ownHouse&&!L.houseAsked&&working){L.houseAsked=true;Q.push(houseScene(L));}
   if(a>=L.sched.care&&a<=62&&!L.careAsked){const p=L.parents.find(p=>p.alive&&p.age>=75);if(p){L.careAsked=true;Q.push(careScene(L,p));}}
-  if(a===60&&working&&!L.retired)Q.push(retireScene(L));
-  if(a>=60&&L.job&&!L.retired&&!Q.some(s=>s.title==='60歳 定年')){retire(L);}
-  if(L.reemp===a)addLog(L,'再雇用の仕事を終えた。','work');
+  if(working&&!L.retired&&!L.job.athlete&&a===teinenOf(L))Q.push(retireScene(L));
+  if(L.job&&!L.job.athlete&&!L.retired&&a>teinenOf(L)){retire(L);}
+  if(L.reemp===a)addLog(L,'定年後の仕事を終えた。','work');
   if(L.age>=L.sched.snow&&!L.snowAsked&&L.loc.inPref&&muniOf(L).snow>=2&&a<=85){L.snowAsked=true;L.stats.add('snowex');Q.push(snowScene(L));}
   if(a===75)Q.push(licenseScene(L));
   if(L.job&&L.job.athlete){if(a>=L.job.until){L.job.athlete=false;Q.push(proRetireScene(L));}else if(L.job.size==='pro'){const cs0=clubSalary(L.job.company,L.job.tier||'low');const ns=Math.max(300,Math.round((cs0?0.5*L.job.salary+0.5*cs0:L.job.salary)*(1+gauss()*(cs0?0.1:0.15))));const cs=contractScene(L,ns);if(cs)Q.push(cs);else L.job.salary=ns;}}
