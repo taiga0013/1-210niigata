@@ -567,7 +567,7 @@ const STAT={
   disOut:['real','県外・海外の出来事の頻度は、その地域で1990〜2025年の36年間に起きた大きな災害・暴動・テロなどのうち、公的機関の資料や主要な報道で広く記録されているものの件数(下限)を、年あたりに直したものです。'],
   aDisOut:['assume','県外・海外で一人がその出来事に巻き込まれる割合(0.18×種類ごとの係数。暑さ・煙害は1.5、暴動0.7、テロ0.3など)と、被害の大きさ・影響はゲーム上の仮定です。新潟県外の国内は8つの地域に分けています。'],
   aFac:['assume','学部・学科の名前は各大学の実在のものですが、このゲームでは大学に合格したあとで選ぶ形にしています(実際は学部ごとに入試があります)。県外の大学は学部まで、海外の大学は専攻の分野だけです。医・歯・薬は6年制としています。'],
-  aPro:['assume','部活で競技の力が高いと、中学1年でU-15、高校入学時にU-18のクラブユース(新潟県内のプロクラブの下部組織)から誘いが来て、18歳・大学在学中・大学卒業時には国内・海外のプロのクラブからオファーが来ます(声がかかる条件・年俸は仮定)。サッカー男子の移籍先は2026/27シーズンのJ1・J2の全40クラブと、プレミアリーグ・ラ・リーガ・ブンデスリーガ・セリエA・リーグ・アンの全クラブです(リーグの顔ぶれは毎年変わります)。活躍した選手には日本代表の招集があります(確率は仮定、大会の年はゲーム内の想定)。プロ選手は1年ごとに契約更改があり、毎年ほかのチーム(国内・海外あわせて4〜6チーム)から話が来ます。移籍先のチーム名は実在のものです。プロ・実業団に声がかかる見込み(競技の力から15〜70%)、年俸の幅(400万〜3,000万円)、現役を続ける年数はゲーム上の仮定です。チーム・所属先の名前は実在のものですが、年俸や出来事はそのチームの実際とは関係ありません。'],
+  aPro:['assume','クラブユースは新潟県内のほか、県外のJリーグ・Bリーグのクラブの下部組織(鹿島アントラーズユース、千葉ジェッツU18など)からも誘いが来ます。県外のU-15は家族で引っ越し、U-18は寮に入って近くの高校に通う形です。部活で競技の力が高いと、中学1年でU-15、高校入学時にU-18のクラブユース(新潟県内のプロクラブの下部組織)から誘いが来て、18歳・大学在学中・大学卒業時には国内・海外のプロのクラブからオファーが来ます(声がかかる条件・年俸は仮定)。サッカー男子の移籍先は2026/27シーズンのJ1・J2の全40クラブと、プレミアリーグ・ラ・リーガ・ブンデスリーガ・セリエA・リーグ・アンの全クラブです(リーグの顔ぶれは毎年変わります)。活躍した選手には日本代表の招集があります(確率は仮定、大会の年はゲーム内の想定)。プロ選手は1年ごとに契約更改があり、毎年ほかのチーム(国内・海外あわせて4〜6チーム)から話が来ます。移籍先のチーム名は実在のものです。プロ・実業団に声がかかる見込み(競技の力から15〜70%)、年俸の幅(400万〜3,000万円)、現役を続ける年数はゲーム上の仮定です。チーム・所属先の名前は実在のものですが、年俸や出来事はそのチームの実際とは関係ありません。'],
   aPromo:['assume','昇進の声がかかる年齢(主任27歳・係長32歳・課長38歳・部長45歳・役員52歳から)、1年あたりの声のかかりやすさ、役職ごとの賃金の倍率(主任1.05〜役員2.2倍)はゲーム上の仮定です。転職すると役職が1つ下がります。'],
   payJ:['real','Jクラブの年俸は、Jリーグ「2025年度 クラブ決算一覧」の各クラブのトップチーム人件費(例: 浦和32.7億円、町田32.4億円、八戸1.7億円)から計算。岡山は5か月決算のため12か月分に直しています。'],
   payEU:['real','欧州クラブの年俸は、ブンデスリーガはDFLが公表した各クラブの人件費、リーグ・アンはDNCGが公表した人件費(2024/25)、セリエAはCalcio e Finanzaの選手年俸総額(2025/26)、プレミアリーグとラ・リーガはCapologyの選手年俸の推計(2024-25)から計算。'],
@@ -576,7 +576,7 @@ const STAT={
   teinen:['real','定年を一律に定めている企業の定年年齢は、60歳72.3%、65歳21.1%、66歳以上3.5%(厚生労働省 就労条件総合調査、令和4年)。公務員の定年は2031年度までに65歳へ引き上げ。65歳までの雇用確保は法律で企業の義務。'],
   aRet:['assume','選手の格による引退年齢の差(上位+3歳・中位−0.5歳・下位−3歳。ゲーム内でプロになる人の平均が統計に近づくように調整)とばらつき(標準偏差2.5歳)は仮定。野球とサッカー以外の競技は公表値がないため、2つの平均(26.6歳)で代用しています。'],
   aAch:['assume','実績の中身はゲーム上の決まりです。'],
-  aSport:['assume','スポーツ推薦は、運動や部活を重点にした年数・運動部・好きなこと・健康から出す「競技の力」で声がかかる仮定です。推薦先の学校は候補からの抽選で、実際の推薦枠を示すものではありません。高校は合格しやすさ90%、大学は50〜90%としています。'],
+  aSport:['assume','県外の推薦先は、スポーツ推薦や特待で県外からも選手を受け入れている実在の私立の強豪校(大阪桐蔭、青森山田など)です。推薦の条件・合格しやすさ(県外は85%)は仮定です。スポーツ推薦は、運動や部活を重点にした年数・運動部・好きなこと・健康から出す「競技の力」で声がかかる仮定です。推薦先の学校は候補からの抽選で、実際の推薦枠を示すものではありません。高校は合格しやすさ90%、大学は50〜90%としています。'],
   snowex:['real','令和2年度の大雪では県内で死者21人、死傷者364人。屋根の雪下ろし中の事故が多くを占めました。']
 };
 
@@ -843,6 +843,18 @@ function hsCandidates(L){
   if(c.length>7){const n=c.length;const idx=[...new Set([0,1,2,3,4,5,6].map(i=>Math.round(i*(n-1)/6)))];c=idx.map(i=>c[i]);}
   return c.map(s=>({...s,far:s.city!==own}));
 }
+const OUT_SPORT_HS={
+  '野球':{m:[['大阪桐蔭高校','大阪府大東市'],['横浜高校','神奈川県横浜市'],['仙台育英高校','宮城県仙台市'],['智辯和歌山高校','和歌山県和歌山市'],['花巻東高校','岩手県花巻市']],f:[['神戸弘陵学園高校','兵庫県神戸市'],['履正社高校','大阪府豊中市']]},
+  'サッカー':{m:[['青森山田高校','青森県青森市'],['流通経済大学付属柏高校','千葉県柏市'],['静岡学園高校','静岡県静岡市'],['東福岡高校','福岡県福岡市'],['前橋育英高校','群馬県前橋市']],f:[['藤枝順心高校','静岡県藤枝市'],['十文字高校','東京都']]},
+  'バスケットボール':{m:[['福岡第一高校','福岡県福岡市'],['福岡大学附属大濠高校','福岡県福岡市']],f:[['桜花学園高校','愛知県名古屋市'],['京都精華学園高校','京都府京都市']]},
+  'バレーボール':{m:[['駿台学園高校','東京都'],['東山高校','京都府京都市']],f:[['下北沢成徳高校','東京都'],['就実高校','岡山県岡山市']]},
+  '卓球':{m:[['愛工大名電高校','愛知県名古屋市'],['野田学園高校','山口県山口市']],f:[['四天王寺高校','大阪府大阪市']]},
+  '陸上競技':{m:[['佐久長聖高校','長野県佐久市'],['大牟田高校','福岡県大牟田市']],f:[['仙台育英高校','宮城県仙台市'],['神村学園高校','鹿児島県いちき串木野市']]},
+  '柔道':{m:[['国士舘高校','東京都'],['東海大学付属相模高校','神奈川県相模原市']],f:[['埼玉栄高校','埼玉県さいたま市']]},
+  '水泳':{m:[['豊川高校','愛知県豊川市'],['日本大学豊山高校','東京都']],f:[['豊川高校','愛知県豊川市']]},
+  'ソフトテニス':{m:[['尽誠学園高校','香川県善通寺市']],f:[['文化学園大学杉並高校','東京都']]},
+  '剣道':{m:[['九州学院高校','熊本県熊本市']],f:[['中村学園女子高校','福岡県福岡市']]}
+};
 function hsScene(L){
   const c=hsCandidates(L);const my=myDev(L);const m=MUNI[L.birth];
   L.stats.add('hsdev');L.stats.add('aPass');
@@ -865,6 +877,12 @@ function hsScene(L){
     sp.sort(()=>R()-.5).slice(0,2).forEach(h=>{const s={...h,far:h.city!==m.city,sport:true};
       opts.unshift(opt(`スポーツ推薦(${sportName(L)}): ${h.name}(偏差値${h.dev})`,L=>enterHS(L,s,0.9),['health'],`${h.kind}${h.priv?'・私立':''} / 推薦・合格しやすい`,1.2+(L.like==='sport'?1:0)));});
   }
+  {const ol=((OUT_SPORT_HS[L.sportName]||{})[L.sex])||[];
+   if(L.club==='運動部'&&ol.length&&sportScore(L)>=6){
+     L.stats.add('aSport');if(!stats.includes('aSport'))stats.push('aSport');
+     ol.slice().sort(()=>R()-.5).slice(0,R()<0.5?1:2).forEach(h=>{const s2={name:h[0],city:h[1],dev:52,kind:'普通',priv:true,sport:true,outPref:true,far:true};
+       opts.unshift(opt(`スポーツ推薦(${sportName(L)}・県外): ${h[0]}(${h[1]})`,L=>enterHS(L,s2,0.85),['health','free'],'私立・寮に入る / 推薦・合格しやすい',1+(L.like==='sport'?0.6:0)));});
+   }}
   if(!opts.length)opts.push(opt('二次募集のある高校(偏差値40)',L=>enterHS(L,{name:'二次募集の高校',city:m.city,dev:40,kind:'普通',far:false},1),[],'普通 / 合格しやすい'));
   let body=`いまの自分の偏差値は、おおよそ${my.toFixed(1)}。合格しやすさは、偏差値の差から計算した目安です。受験できるのは1回だけで、不合格なら偏差値に見合う学校に進みます。`;
   if(m.name==='粟島浦村')body+=' 島には高校がないので、島を出て暮らすことになります。';
@@ -891,6 +909,8 @@ function enterHS(L,s,p){
   fx(L,{k:4+Math.max(0,s.dev-45)*0.35,r:4,j:s.dev>=65?0:3});
   if(s.far)fx(L,{h:-1,j:-1});
   if(s.abroad){L.school.inPref=false;L.school.abroad=true;L.school.schol=s.schol;L.hsTrack='academic';fx(L,{r:-6,k:4,j:2});setLoc(L,{inPref:false,abroad:true,muni:null,label:s.country});addLog(L,`${s.country}の寮のある高校で暮らしはじめた。言葉にも少しずつ慣れていった。`,'home',true);}
+  else if(s.outPref){L.school.inPref=false;setLoc(L,{inPref:false,muni:null,label:s.city});fx(L,{r:-4});addLog(L,`${s.city}の${s.name}に進み、寮で暮らしはじめた。`,'home',true);}
+  else if(!L.loc.inPref){const h=MUNI[L.birth];setLoc(L,{inPref:true,muni:h.i,label:h.city});addLog(L,'ふるさとに戻り、地元の高校に通いはじめた。','home');}
   else if(MUNI[L.birth].name==='粟島浦村'){fx(L,{j:-3,r:-2});L.savings-=0;addLog(L,'島を出て、本土の下宿で暮らしはじめた。費用がかかり、家族と離れる寂しさもあった。','home');setLoc(L,{inPref:true,muni:MI['新潟市中央区'].i,label:'新潟市'});}
   turn(L,`${s.name}に入学`);mark(L,1,'高校');setRole(L,'school');
   return {text:`${s.name}に合格し、入学した。`};
@@ -1159,24 +1179,52 @@ function contractScene(L,nextSal){
    18歳・大学在学中・大学卒業時にはプロのクラブ(国内・海外)からオファーが来る。
    ユースは新潟県内のプロクラブの下部組織。[チーム名, 所在地, 昇格先のトップチーム] */
 const YOUTH={
-  'サッカー':{m:{'U-15':[['アルビレックス新潟U-15','新潟市','アルビレックス新潟']],'U-18':[['アルビレックス新潟U-18','新潟市','アルビレックス新潟']]},
-              f:{'U-15':[['アルビレックス新潟レディースU-15','新潟市','アルビレックス新潟レディース']],'U-18':[['アルビレックス新潟レディースU-18','新潟市','アルビレックス新潟レディース']]}},
-  'バスケットボール':{m:{'U-15':[['新潟アルビレックスBB U15','長岡市','新潟アルビレックスBB']],'U-18':[['新潟アルビレックスBB U18','長岡市','新潟アルビレックスBB']]},f:{}}
+  'サッカー':{m:{'U-15':[['アルビレックス新潟U-15','新潟市','アルビレックス新潟'],['鹿島アントラーズジュニアユース','茨城県鹿嶋市','鹿島アントラーズ'],['浦和レッズジュニアユース','埼玉県さいたま市','浦和レッズ'],['FC東京U-15深川','東京都','FC東京'],['川崎フロンターレU-15','神奈川県川崎市','川崎フロンターレ'],['横浜F・マリノスジュニアユース','神奈川県横浜市','横浜F・マリノス'],['ガンバ大阪ジュニアユース','大阪府吹田市','ガンバ大阪']],
+                 'U-18':[['アルビレックス新潟U-18','新潟市','アルビレックス新潟'],['鹿島アントラーズユース','茨城県鹿嶋市','鹿島アントラーズ'],['浦和レッズユース','埼玉県さいたま市','浦和レッズ'],['FC東京U-18','東京都','FC東京'],['川崎フロンターレU-18','神奈川県川崎市','川崎フロンターレ'],['横浜F・マリノスユース','神奈川県横浜市','横浜F・マリノス'],['ガンバ大阪ユース','大阪府吹田市','ガンバ大阪'],['セレッソ大阪U-18','大阪府大阪市','セレッソ大阪'],['サンフレッチェ広島F.Cユース','広島県安芸高田市','サンフレッチェ広島']]},
+              f:{'U-15':[['アルビレックス新潟レディースU-15','新潟市','アルビレックス新潟レディース'],['日テレ・東京ヴェルディセリアス','東京都','日テレ・東京ヴェルディベレーザ']],
+                 'U-18':[['アルビレックス新潟レディースU-18','新潟市','アルビレックス新潟レディース'],['日テレ・東京ヴェルディメニーナ','東京都','日テレ・東京ヴェルディベレーザ'],['浦和レッズレディースユース','埼玉県さいたま市','三菱重工浦和レッズレディース']]}},
+  'バスケットボール':{m:{'U-15':[['新潟アルビレックスBB U15','長岡市','新潟アルビレックスBB'],['千葉ジェッツU15','千葉県船橋市','千葉ジェッツ'],['宇都宮ブレックスU15','栃木県宇都宮市','宇都宮ブレックス'],['川崎ブレイブサンダースU15','神奈川県川崎市','川崎ブレイブサンダース'],['アルバルク東京U15','東京都','アルバルク東京']],
+                         'U-18':[['新潟アルビレックスBB U18','長岡市','新潟アルビレックスBB'],['千葉ジェッツU18','千葉県船橋市','千葉ジェッツ'],['宇都宮ブレックスU18','栃木県宇都宮市','宇都宮ブレックス'],['川崎ブレイブサンダースU18','神奈川県川崎市','川崎ブレイブサンダース'],['アルバルク東京U18','東京都','アルバルク東京']]},f:{}}
 };
-function youthTeam(L,level){const y=YOUTH[L.sportName];if(!y)return null;const g=y[L.sex]||{};const l=g[level];return l&&l.length?l[0]:null;}
-function youthOK(L,level){
-  if(L.club!=='運動部'||!youthTeam(L,level))return false;
-  if(level==='U-15')return sportScore(L)>=7&&R()<0.5;
-  if(L.youth)return R()<0.65;
-  return sportScore(L)>=9&&R()<0.3;
+function youthList(L,level){const y=YOUTH[L.sportName];if(!y)return [];return ((y[L.sex]||{})[level])||[];}
+const isPrefPlace=p=>cityMuni(p)!=null;
+// 誘いを出すチーム(県内は従来どおり、県外は競技の力がもっと高い人に1〜2チーム)
+function youthOffers(L,level){
+  if(L.club!=='運動部')return [];
+  const list=youthList(L,level);if(!list.length)return [];
+  const sc=sportScore(L);const out=[];
+  if(L.youth&&level==='U-18'){const t=list.find(t=>t[2]===L.youth.top);if(t&&R()<0.65)out.push(t);}
+  const inP=list.filter(t=>isPrefPlace(t[1])&&!out.includes(t));
+  if(inP.length&&(level==='U-15'?sc>=7&&R()<0.5:sc>=9&&R()<0.3))out.push(inP[0]);
+  const outP=list.filter(t=>!isPrefPlace(t[1])&&!out.includes(t)).sort(()=>R()-.5);
+  if(sc>=(level==='U-15'?8:10))outP.slice(0,2).forEach(t=>{if(R()<0.35)out.push(t);});
+  return out;
 }
+function youthOK(L,level){L._yo=youthOffers(L,level);return L._yo.length>0;}
 function youthScene(L,level){
-  const t=youthTeam(L,level);
+  const offers=L._yo||youthOffers(L,level);
   const promo=L.youth&&level==='U-18';
-  return scene({title:`${L.age}歳 ${promo?'ユースへの昇格':'クラブユースからの誘い'}`,body:`${L.clubName||L.sportName}での活躍が目にとまり、${t[0]}${promo?'への昇格の話が来ました。':'から誘いが来ました。'}学校に通いながら、プロのクラブの下部組織で練習します。`,stats:['aPro'],opts:[
-    opt(`${t[0]}に入る`,L=>{L.youth={name:t[0],level,top:t[2],place:t[1]};L.clubName=t[0];fx(L,{h:3,r:1,j:3,k:-1});mark(L,1,level);turn(L,`${t[0]}に加入`);L.stats.add('aPro');return {text:`${t[0]}に入った。`,hot:true};},['health','love','work'],level==='U-15'?'中学の部活のかわりに通う':'高校に通いながら練習する',1.5),
-    opt(promo?'ユースを離れ、高校の部活で続ける':'学校の部活で続ける',L=>{if(promo){L.youth=null;L.clubName=sportClubName(L);}turn(L,`${t[0]}の話を断った`);return {text:'誘いは断り、学校の部活で続けることにした。'};},['family','local','learn'])
-  ]});
+  const opts=offers.map(t=>{
+    const out=!isPrefPlace(t[1]);const same=L.youth&&L.youth.top===t[2];
+    return opt(`${same&&promo?'昇格: ':''}${t[0]}(${t[1]})`,L=>{
+      L.youth={name:t[0],level,top:t[2],place:t[1]};L.clubName=t[0];fx(L,{h:3,r:1,j:3,k:-1});mark(L,1,level);turn(L,`${t[0]}に加入${out?'(県外)':''}`);L.stats.add('aPro');
+      if(out){
+        setLoc(L,{inPref:false,muni:null,label:t[1]});fx(L,{r:-3});
+        if(level==='U-18'){
+          G.queue=G.queue.filter(q=>q.title!=='15歳 高校を選ぶ');
+          const nm=`${t[1]}の高校(${t[0]}の選手が通う学校)`;
+          L.school={type:'hs',name:nm,end:18,inPref:false};L.hsName=nm;L.hsTrack='academic';fx(L,{k:3,r:2});setRole(L,'school');mark(L,1,'高校');turn(L,'クラブの近くの高校に入学');
+          addLog(L,`${t[1]}にあるクラブの寮で暮らしながら、近くの高校に通いはじめた。`,'home',true);
+        }else addLog(L,`${t[0]}に入るため、家族で${t[1]}に引っ越した。`,'home',true);
+      }else if(!L.loc.inPref){const h=MUNI[L.birth];setLoc(L,{inPref:true,muni:h.i,label:h.city});}
+      return {text:`${t[0]}に入った。`,hot:true};
+    },['health','love','work'],`${out?(level==='U-18'?'県外 / 寮に入り、近くの高校に通う':'県外 / 家族で引っ越す'):(level==='U-15'?'県内 / 中学の部活のかわりに通う':'県内 / 高校に通いながら練習する')}`,same?2:out?0.8:1.5);
+  });
+  opts.push(opt(promo?'ユースを離れ、高校の部活で続ける':'学校の部活で続ける',L=>{
+    if(promo){L.youth=null;L.clubName=sportClubName(L);if(!L.loc.inPref){const h=MUNI[L.birth];setLoc(L,{inPref:true,muni:h.i,label:h.city});addLog(L,'ふるさとに戻った。','home');}}
+    turn(L,'クラブユースの話を断った');return {text:'誘いは断り、学校の部活で続けることにした。'};},['family','local','learn']));
+  const names=offers.map(t=>t[0]).join('、');
+  return scene({title:`${L.age}歳 ${promo?'ユースへの昇格と誘い':'クラブユースからの誘い'}`,body:`${L.clubName||L.sportName}での活躍が目にとまり、${names}から${promo?'話':'誘い'}が来ました。学校に通いながら、プロのクラブの下部組織で練習します。`,stats:['aPro'],opts});
 }
 function sportClubName(L){const c=CLUBS_SPORT.find(c=>c[1]===L.sportName);return c?c[0]:L.clubName;}
 function offerOK(L){
@@ -1566,10 +1614,10 @@ function stepYear(){
   if(MILE[a])Q.push(mileScene(a));
   if(a===7)Q.push(likeScene(L));
   if(a===12)Q.push(clubScene(L));
+  if(a===15&&youthOK(L,'U-18'))Q.push(youthScene(L,'U-18'));
   if(a===15)Q.push(hsScene(L));
   if(a===19&&L.youth){L.youth=null;L.clubName=sportClubName(L);}
   if(a===13&&youthOK(L,'U-15'))Q.push(youthScene(L,'U-15'));
-  if(a===15&&youthOK(L,'U-18'))Q.push(youthScene(L,'U-18'));
   if(L.school&&L.school.type==='univ'&&a===L.school.end-2&&!L.earlySeen&&!L.offerSeen&&L.club==='運動部'&&PRO_DOM[L.sportName]&&((PRO_DOM[L.sportName][L.sex]||[]).length)&&sportScore(L)>=12)Q.push(offerScene(L,'early'));
   if(a===18&&L.school&&L.school.type==='hs')Q.push(pathScene(L));
   if(L.roninNow&&L.sched.ronin===a)Q.push(roninScene(L));
@@ -1684,7 +1732,7 @@ const OUT_TYPE={quake:['大きな地震',1],storm:['大雨・台風・洪水',1]
 function hazRegion(L){
   const t=L.loc.label||'';
   if(L.loc.abroad)return OUT_HAZ[t]?t:null;
-  const rules=[[/北海道|札幌/,'北海道'],[/広島|府中町|岡山/,'中国'],[/福岡|佐賀|宮崎|長崎|大分|熊本|鹿児島/,'九州'],[/山梨|甲府|富山|石川|金沢|福井|長野|松本/,'北陸・甲信'],[/徳島|鳴門|愛媛|今治|松山|香川|高知/,'四国'],[/宮城|仙台|山形|福島|秋田|岩手|盛岡|青森|弘前/,'東北'],[/茨城|水戸|つくば|栃木|宇都宮|小山|群馬|前橋|高崎/,'北関東'],[/愛知|名古屋|豊田|刈谷|静岡|浜松/,'東海'],[/大阪|門真|京都|兵庫|神戸|滋賀|彦根|和歌山/,'近畿']];
+  const rules=[[/北海道|札幌/,'北海道'],[/広島|府中町|岡山|山口/,'中国'],[/福岡|佐賀|宮崎|長崎|大分|熊本|鹿児島/,'九州'],[/山梨|甲府|富山|石川|金沢|福井|長野|松本/,'北陸・甲信'],[/徳島|鳴門|愛媛|今治|松山|香川|高知/,'四国'],[/宮城|仙台|山形|福島|秋田|岩手|盛岡|青森|弘前/,'東北'],[/茨城|水戸|つくば|栃木|宇都宮|小山|群馬|前橋|高崎/,'北関東'],[/愛知|名古屋|豊田|刈谷|静岡|浜松/,'東海'],[/大阪|門真|京都|兵庫|神戸|滋賀|彦根|和歌山/,'近畿']];
   for(const r of rules)if(r[0].test(t))return r[1];
   return '首都圏';
 }
