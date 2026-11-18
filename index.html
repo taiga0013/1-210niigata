@@ -567,7 +567,7 @@ const STAT={
   disOut:['real','県外・海外の出来事の頻度は、その地域で1990〜2025年の36年間に起きた大きな災害・暴動・テロなどのうち、公的機関の資料や主要な報道で広く記録されているものの件数(下限)を、年あたりに直したものです。'],
   aDisOut:['assume','県外・海外で一人がその出来事に巻き込まれる割合(0.18×種類ごとの係数。暑さ・煙害は1.5、暴動0.7、テロ0.3など)と、被害の大きさ・影響はゲーム上の仮定です。新潟県外の国内は8つの地域に分けています。'],
   aFac:['assume','学部・学科の名前は各大学の実在のものですが、このゲームでは大学に合格したあとで選ぶ形にしています(実際は学部ごとに入試があります)。県外の大学は学部まで、海外の大学は専攻の分野だけです。医・歯・薬は6年制としています。'],
-  aPro:['assume','プロ選手は1年ごとに契約更改があり、毎年ほかのチーム(国内・海外あわせて4〜6チーム)から話が来ます。移籍先のチーム名は実在のものです。プロ・実業団に声がかかる見込み(競技の力から15〜70%)、年俸の幅(400万〜3,000万円)、現役を続ける年数はゲーム上の仮定です。チーム・所属先の名前は実在のものですが、年俸や出来事はそのチームの実際とは関係ありません。'],
+  aPro:['assume','部活で競技の力が高いと、中学1年でU-15、高校入学時にU-18のクラブユース(新潟県内のプロクラブの下部組織)から誘いが来て、18歳・大学在学中・大学卒業時には国内・海外のプロのクラブからオファーが来ます(声がかかる条件・年俸は仮定)。プロ選手は1年ごとに契約更改があり、毎年ほかのチーム(国内・海外あわせて4〜6チーム)から話が来ます。移籍先のチーム名は実在のものです。プロ・実業団に声がかかる見込み(競技の力から15〜70%)、年俸の幅(400万〜3,000万円)、現役を続ける年数はゲーム上の仮定です。チーム・所属先の名前は実在のものですが、年俸や出来事はそのチームの実際とは関係ありません。'],
   aPromo:['assume','昇進の声がかかる年齢(主任27歳・係長32歳・課長38歳・部長45歳・役員52歳から)、1年あたりの声のかかりやすさ、役職ごとの賃金の倍率(主任1.05〜役員2.2倍)はゲーム上の仮定です。転職すると役職が1つ下がります。'],
   aAch:['assume','実績の中身はゲーム上の決まりです。'],
   aSport:['assume','スポーツ推薦は、運動や部活を重点にした年数・運動部・好きなこと・健康から出す「競技の力」で声がかかる仮定です。推薦先の学校は候補からの抽選で、実際の推薦枠を示すものではありません。高校は合格しやすさ90%、大学は50〜90%としています。'],
@@ -901,7 +901,7 @@ function pathScene(L){
     job18Opt(L,true,'県内で就職',['money','local','family'],wj),
     ...(abroadOK(L,'uni')?[opt('海外の大学',()=>({next:[abroadUniScene(L)]}),['free','learn','work'],L.school&&L.school.abroad?'海外の高校から':'',L.school&&L.school.abroad?2.5:0.6)]:[]),
     job18Opt(L,false,'県外で就職',['money','free','work'],wj*0.35),
-    ...(proOK(L)?[proOpt(L,'hs')]:[]),
+    ...(offerOK(L)?[offerOpt(L,'hs')]:proOK(L)?[proOpt(L,'hs')]:[]),
     ...(sportScore(L)>=7?[opt(`スポーツ推薦(${sportName(L)})で大学へ`,()=>({next:[sportUniScene(L)]}),['health','love'],'推薦の話が来ている',1.5)]:[])
   ]});
 }
@@ -916,7 +916,7 @@ function abroadOK(L,stage){
   return false;
 }
 const COUNTRY=['アメリカ','イギリス','カナダ','オーストラリア','ニュージーランド','シンガポール','ドイツ','台湾'];
-function sportScore(L){return (L.sportYears||0)+(L.like==='sport'?2:0)+(L.club==='運動部'?2:0)+(L.sportRec?2:0)+(L.m.h-65)/8;}
+function sportScore(L){return (L.sportYears||0)+(L.youth?3:0)+(L.like==='sport'?2:0)+(L.club==='運動部'?2:0)+(L.sportRec?2:0)+(L.m.h-65)/8;}
 function sportUniScene(L){
   L.stats.add('aSport');L.stats.add('unidev');
   const sc=sportScore(L);const p=clamp(0.55+0.04*(sc-7),0.5,0.9);
@@ -1148,6 +1148,76 @@ function contractScene(L,nextSal){
   return scene({title:`${L.age}歳 契約更改`,body:`${cur}での1年が終わりました。来季の契約です。ほかのチームからも話が来ています。`,stats:['aPro'],opts});
 }
 
+/* ---------- クラブユースとプロからのオファー ----------
+   部活でうまくいっている(競技の力が高い)と、中学ではU-15、高校入学時はU-18のクラブユースから、
+   18歳・大学在学中・大学卒業時にはプロのクラブ(国内・海外)からオファーが来る。
+   ユースは新潟県内のプロクラブの下部組織。[チーム名, 所在地, 昇格先のトップチーム] */
+const YOUTH={
+  'サッカー':{m:{'U-15':[['アルビレックス新潟U-15','新潟市','アルビレックス新潟']],'U-18':[['アルビレックス新潟U-18','新潟市','アルビレックス新潟']]},
+              f:{'U-15':[['アルビレックス新潟レディースU-15','新潟市','アルビレックス新潟レディース']],'U-18':[['アルビレックス新潟レディースU-18','新潟市','アルビレックス新潟レディース']]}},
+  'バスケットボール':{m:{'U-15':[['新潟アルビレックスBB U15','長岡市','新潟アルビレックスBB']],'U-18':[['新潟アルビレックスBB U18','長岡市','新潟アルビレックスBB']]},f:{}}
+};
+function youthTeam(L,level){const y=YOUTH[L.sportName];if(!y)return null;const g=y[L.sex]||{};const l=g[level];return l&&l.length?l[0]:null;}
+function youthOK(L,level){
+  if(L.club!=='運動部'||!youthTeam(L,level))return false;
+  if(level==='U-15')return sportScore(L)>=7&&R()<0.5;
+  if(L.youth)return R()<0.65;
+  return sportScore(L)>=9&&R()<0.3;
+}
+function youthScene(L,level){
+  const t=youthTeam(L,level);
+  const promo=L.youth&&level==='U-18';
+  return scene({title:`${L.age}歳 ${promo?'ユースへの昇格':'クラブユースからの誘い'}`,body:`${L.clubName||L.sportName}での活躍が目にとまり、${t[0]}${promo?'への昇格の話が来ました。':'から誘いが来ました。'}学校に通いながら、プロのクラブの下部組織で練習します。`,stats:['aPro'],opts:[
+    opt(`${t[0]}に入る`,L=>{L.youth={name:t[0],level,top:t[2],place:t[1]};L.clubName=t[0];fx(L,{h:3,r:1,j:3,k:-1});mark(L,1,level);turn(L,`${t[0]}に加入`);L.stats.add('aPro');return {text:`${t[0]}に入った。`,hot:true};},['health','love','work'],level==='U-15'?'中学の部活のかわりに通う':'高校に通いながら練習する',1.5),
+    opt(promo?'ユースを離れ、高校の部活で続ける':'学校の部活で続ける',L=>{if(promo){L.youth=null;L.clubName=sportClubName(L);}turn(L,`${t[0]}の話を断った`);return {text:'誘いは断り、学校の部活で続けることにした。'};},['family','local','learn'])
+  ]});
+}
+function sportClubName(L){const c=CLUBS_SPORT.find(c=>c[1]===L.sportName);return c?c[0]:L.clubName;}
+function offerOK(L){
+  if(L.offerSeen||L.club!=='運動部')return false;
+  const d=PRO_DOM[L.sportName];if(!d||!(d[L.sex]||[]).length)return false;
+  return (L.youth&&L.youth.level==='U-18')||sportScore(L)>=11;
+}
+function offerTier(L){const s=sportScore(L);return s>=15?'top':s>=12.5?'mid':'low';}
+function buildOffers(L){
+  const tier=offerTier(L);const sp=L.sportName,sx=L.sex;
+  const base=tier==='top'?ri(1500,3000):tier==='mid'?ri(800,1500):ri(400,800);
+  const out=[];
+  if(L.youth&&L.youth.top&&L.age<=19)out.push({name:L.youth.top,place:L.youth.place,abroad:false,promo:true});
+  const dom=((PRO_DOM[sp]||{})[sx]||[]).filter(t=>!out.some(o=>o.name===t[0]));
+  const abr=((PRO_ABROAD[sp]||{})[sx]||[]);
+  const n=ri(2,4);const na=Math.min(abr.length,tier==='top'?2:tier==='mid'?1:(R()<0.25?1:0));
+  dom.slice().sort(()=>R()-.5).slice(0,Math.max(0,n-out.length-na)).forEach(t=>out.push({name:t[0],place:t[1],abroad:false}));
+  abr.slice().sort(()=>R()-.5).slice(0,na).forEach(t=>out.push({name:t[0],place:t[1],country:t[2],abroad:true}));
+  return out.map(o=>({...o,tier,sal:Math.max(300,Math.round(base*(o.abroad?(tier==='low'?0.8+R()*0.5:1.2+R()*0.8):0.85+R()*0.4)))}));
+}
+function joinPro(L,o,dropout){
+  const sp=PRO[L.sportName]||{kind:'pro'};const tier=o.tier;
+  const until=L.age+(tier==='top'?ri(12,17):tier==='mid'?ri(8,13):ri(4,9));
+  const inPref=!o.abroad&&cityMuni(o.place)!=null;
+  if(dropout)L.edu='hs';
+  L.school=null;L.roninNow=false;L.youth=null;if(L.edu==='univ_pending'||!L.edu||L.edu==='none')L.edu=L.edu==='univ_pending'?'univ':'hs';
+  L.job={size:'pro',inPref,company:o.name,label:`${o.name} 選手`,salary:o.sal,until,athlete:true,tier};
+  L.workStart=L.age;L.proTried=true;L.offerSeen=true;setRole(L,'work');mark(L,1,o.abroad?'海外でプロ入り':'プロ入り');L.focus=defaultFocus(L);
+  if(o.abroad){setLoc(L,{inPref:false,abroad:true,muni:null,label:o.country});fx(L,{r:-5,k:2});}
+  else if(inPref){const mi=cityMuni(o.place);setLoc(L,{inPref:true,muni:mi,label:MUNI[mi].city});}
+  else setLoc(L,{inPref:false,muni:null,label:o.place});
+  fx(L,{j:8,h:2});turn(L,`${o.name}に入団(${o.promo?'トップ昇格':o.abroad?'海外のプロ':'プロ'}・${L.sportName}${dropout?'・大学を中退':''})`);
+  return {text:`${o.place}の${o.name}に${o.promo?'トップ昇格で':''}入団した。1年目の年収は約${yen(Math.round(o.sal/10)*10)}(仮定)。`,hot:true};
+}
+function offerScene(L,stage){
+  L.stats.add('aPro');if(stage==='early')L.earlySeen=true;else L.offerSeen=true;
+  const offers=buildOffers(L);
+  const opts=offers.map(o=>opt(`${o.promo?'トップ昇格':o.abroad?'海外':'国内'}: ${o.name}(${o.place})`,L=>joinPro(L,o,stage==='early'),o.abroad?['free','work','love']:['work','love','money'],`1年目の年収 約${yen(Math.round(o.sal/10)*10)}${o.abroad?' / 言葉や暮らしが大きく変わる':''}`,o.promo?2:1.2));
+  const back=stage==='hs'?'オファーを断って、ほかの進路を選ぶ':stage==='grad'?'オファーを断って、就職先を選ぶ':'大学を卒業してから考える';
+  opts.push(opt(back,L=>{if(stage!=='early')L.proTried=true;turn(L,'プロのオファーを断った');return stage==='early'?{text:'大学を卒業することを選んだ。'}:{text:'オファーは断った。',next:[stage==='hs'?pathScene(L):gradScene(L)]};},['learn','family','local']));
+  const where=stage==='hs'?`${L.youth?L.youth.name:L.hsName}での活躍`:`${L.school&&L.school.type==='senmon'?'専門学校':'大学'}の${sportClubName(L)||L.sportName}での活躍`;
+  return scene({title:`${L.age}歳 プロからのオファー`,body:`${where}を見て、${offers.length}つのクラブからオファーが届きました。${stage==='early'?'入団するなら、大学は中退することになります。':''}`,stats:['aPro'],opts});
+}
+function offerOpt(L,stage){
+  return opt(`プロからのオファーを見る(${L.sportName})`,()=>({next:[offerScene(L,stage)]}),['health','love','work'],L.youth?'ユースから':'活躍が認められた',2);
+}
+
 function judgeUni(L,u,p){
   if(R()<p){
     L.school={type:'univ',name:u.name,end:L.age+4,inPref:u.inPref,city:u.city||u.muni,abroad:!!u.abroad};
@@ -1321,7 +1391,7 @@ function gradScene(L){
     ...(L.field==='med'&&!/保健学科/.test(L.faculty||'')?[(()=>{const h=pick([['新潟大学医歯学総合病院','新潟市'],['新潟市民病院','新潟市'],['長岡赤十字病院','長岡市'],['新潟県立中央病院','上越市']]);return opt(`医師(研修医)として働く: ${h[0]}`,mk('doc',true,false,{name:h[0],place:h[1]}),['health','work'],`実在の病院 / 初年度 年収 約${yen(estWage(L,L.edu,'doc'))}`,2);})()]:[]),
     ...(L.field==='nurse'?[(()=>{const h=pick([['新潟市民病院','新潟市'],['長岡赤十字病院','長岡市'],['新潟県立中央病院','上越市']]);return opt(`看護・医療の仕事に就く: ${h[0]}`,mk('p',true,false,{name:h[0],place:h[1]}),['health','family'],`実在の病院 / 初年度 年収 約${yen(estWage(L,L.edu,'p'))}`,1.6);})()]:[]),
     ...(L.field==='edu'?[opt('教員になる: 新潟県の公立学校',mk('p',true,true,{name:'新潟県の公立学校(教員)',place:home.city}),['family','local'],`実在の機関 / 初年度 年収 約${yen(estWage(L,L.edu,'p'))}`,1.6)]:[]),
-    ...(proOK(L)?[proOpt(L,'grad')]:[]),
+    ...(offerOK(L)?[offerOpt(L,'grad')]:proOK(L)?[proOpt(L,'grad')]:[]),
     ...(cX?[opt(`海外で就職: ${cX.name}(${cX.place})`,mk('x',false,false,cX),['free','work','learn'],coNote(cX,L,L.edu,'x')+' / 生活費も高い',s.abroad?2.2:0.25)]:[])
   ]});
 }
@@ -1435,6 +1505,10 @@ function stepYear(){
   if(a===7)Q.push(likeScene(L));
   if(a===12)Q.push(clubScene(L));
   if(a===15)Q.push(hsScene(L));
+  if(a===19&&L.youth){L.youth=null;L.clubName=sportClubName(L);}
+  if(a===13&&youthOK(L,'U-15'))Q.push(youthScene(L,'U-15'));
+  if(a===15&&youthOK(L,'U-18'))Q.push(youthScene(L,'U-18'));
+  if(L.school&&L.school.type==='univ'&&a===L.school.end-2&&!L.earlySeen&&!L.offerSeen&&L.club==='運動部'&&PRO_DOM[L.sportName]&&((PRO_DOM[L.sportName][L.sex]||[]).length)&&sportScore(L)>=12)Q.push(offerScene(L,'early'));
   if(a===18&&L.school&&L.school.type==='hs')Q.push(pathScene(L));
   if(L.roninNow&&L.sched.ronin===a)Q.push(roninScene(L));
   if(L.school&&L.school.type!=='hs'&&L.school.end===a)Q.push(gradScene(L));
@@ -1468,7 +1542,7 @@ function updateMeters(L){
     L.m[k]=clamp(L.m[k]+d,0,100);
   }
   if(f&&f[4]&&f[4].career)L.career+=1;
-  if(f&&(f[0]==='sport'||f[0]==='club')&&a<=18)L.sportYears=(L.sportYears||0)+1;
+  if(f&&(f[0]==='sport'||f[0]==='club')&&(a<=18||(L.school&&L.school.type==='univ')))L.sportYears=(L.sportYears||0)+1;
   if(a===6||a===12)L.focus=defaultFocus(L);
   L.maxK=Math.max(L.maxK,L.m.k);L.maxR=Math.max(L.maxR,L.m.r);
 }
