@@ -575,6 +575,7 @@ const STAT={
   retJ:['real','プロ野球(NPB)の2025年の戦力外・現役引退選手は平均27.2歳、平均在籍6.8年(NPBの進路調査)。Jリーグの平均引退年齢は26.0歳(2022年、Jリーグ選手会公表として報道)。ただしこのゲームのサッカー選手は、プレーヤーの指定で引退年齢の中央値が35歳になるようにしています。'],
   teinen:['real','定年を一律に定めている企業の定年年齢は、60歳72.3%、65歳21.1%、66歳以上3.5%(厚生労働省 就労条件総合調査、令和4年)。公務員の定年は2031年度までに65歳へ引き上げ。65歳までの雇用確保は法律で企業の義務。'],
   aRet:['assume','選手の格による引退年齢の差(上位+3歳・中位−0.5歳・下位−3歳。ゲーム内でプロになる人の平均が統計に近づくように調整)とばらつき(標準偏差2.5歳)は仮定。野球とサッカー以外の競技は公表値がないため、2つの平均(26.6歳)で代用しています。'],
+  aCoach:['assume','引退した選手は、アカデミー(育成)のコーチ・トップチームのコーチ・スカウトになれます。経験を積み、指導者ライセンスを取ると、ユース監督やトップチームの監督の話が来ることがあります。サッカーはトップチームの監督に日本サッカー協会の最上位のライセンスが必要です。年俸(クラブの選手の平均年俸の0.12〜1.5倍。育成コーチとスカウトは1,500万円、ユース監督は2,500万円、コーチは1億5,000万円が上限。データのないチームは450万〜2,000万円が目安)、声がかかる確率、解任の確率は仮定です。'],
   aAch:['assume','実績の中身はゲーム上の決まりです。'],
   aSport:['assume','県外の推薦先は、スポーツ推薦や特待で県外からも選手を受け入れている実在の私立の強豪校(大阪桐蔭、青森山田など)です。推薦の条件・合格しやすさ(県外は85%)は仮定です。スポーツ推薦は、運動や部活を重点にした年数・運動部・好きなこと・健康から出す「競技の力」で声がかかる仮定です。推薦先の学校は候補からの抽選で、実際の推薦枠を示すものではありません。高校は合格しやすさ90%、大学は50〜90%としています。'],
   snowex:['real','令和2年度の大雪では県内で死者21人、死傷者364人。屋根の雪下ろし中の事故が多くを占めました。']
@@ -736,7 +737,7 @@ function arrows(f){const out=[];for(const k in f[2]){if(f[2][k]>0)out.push(MNAME
 function wageBase(L){
   const a=L.age; let row=WAGE[0];
   for(const w of WAGE)if(a>=w[0])row=w;
-  if(L.job&&L.job.size==='pro')return L.job.salary;
+  if(L.job&&(L.job.size==='pro'||L.job.size==='coach'))return L.job.salary;
   let hs=row[1],un=row[2];
   let mon=L.edu==='univ'?un:L.edu==='senmon'?hs+0.35*(un-hs):hs;
   if(a<20)mon*=0.92;
@@ -1102,7 +1103,9 @@ function proTeamScene(L){
 function proRetireScene(L){
   const team=L.job.company;
   return scene({title:`${L.age}歳 現役引退`,body:`${team}で${L.sportName}の選手として過ごした日々が終わります。これからの仕事を選びます。`,stats:['retJ','aRet'],opts:[
-    opt(`${team}に残り、指導者・スタッフになる`,L=>{L.job={...L.job,size:'p',label:`${team} スタッフ`,athlete:false};L.retiredAthlete=true;turn(L,'現役を引退し、チームのスタッフに');return {text:'現役を引退し、チームのスタッフになった。',hot:true};},['love','local']),
+    coachOpt(L,team,'academy',`${team}の${roleName(L,'academy')}になる`,['love','local','family'],1.1),
+    ...(['top','mid'].includes(L.job.tier)||(L.caps||0)>0?[coachOpt(L,team,'topcoach',`${team}のトップチームのコーチになる`,['work','love'],1.2)]:[]),
+    coachOpt(L,team,'scout',`${team}のスカウトになる`,['free','local'],0.7),
     opt('一般の会社に就職する',L=>{const co=newCompany(L);L.retiredAthlete=true;turn(L,`現役を引退し、${co.name}に就職`);return {text:`現役を引退し、${co.name}で働きはじめた。`,hot:true};},['work','money']),
     opt('ふるさとに戻って働く',L=>{const h=MUNI[L.birth];setLoc(L,{inPref:true,muni:h.i,label:h.city});const co=newCompany(L);L.retiredAthlete=true;turn(L,`引退して、ふるさとの${co.name}へ`);return {text:`ふるさとに戻り、${co.name}で働きはじめた。`,hot:true};},['family','local'])
   ]});
@@ -1114,7 +1117,7 @@ const RANKS=['','主任','係長','課長','部長','役員'];
 const RANK_MULT=[1,1.05,1.12,1.3,1.55,2.2];
 const RANK_AGE=[0,27,32,38,45,52];
 const RANK_P=[0,0.14,0.09,0.05,0.025,0.006];
-function canPromote(L){return L.job&&!L.job.athlete&&L.job.size!=='pro'&&!L.unemp&&!L.retired&&L.age<teinenOf(L);}
+function canPromote(L){return L.job&&!L.job.athlete&&L.job.size!=='pro'&&!L.job.coach&&!L.unemp&&!L.retired&&L.age<teinenOf(L);}
 function promoScene(L){
   const cur=L.job.rank||0,nx=cur+1;
   const now=Math.round(wageBase(L)/10)*10;
@@ -1327,6 +1330,86 @@ function teinenOf(L){
   }
   return L.teinen;
 }
+/* ---------- 指導者・スタッフの道(引退した選手) ----------
+   役割: アカデミー(育成)コーチ → ユース(U-18)監督、トップチームのコーチ → 監督、スカウト。
+   年俸はクラブの選手の平均年俸に役割ごとの倍率をかける(人件費のデータがないチームは役割ごとの目安)。すべてゲーム上の仮定 */
+// [呼び名, 選手の平均年俸に対する倍率, データのないチームの目安(万円), 上限(万円)]
+const COACH_ROLE={academy:['アカデミーコーチ',0.12,450,1500],scout:['スカウト',0.12,450,1500],youthHead:['ユース(U-18)監督',0.2,600,2500],topcoach:['トップチームのコーチ',0.35,900,15000],head:['監督',1.5,2000,Infinity]};
+// 競技ごとの呼び名(野球は育成コーチ・二軍監督、ユースのある競技はユース監督)
+function roleName(L,role){const sp=L.sportName;if(sp==='野球'){if(role==='academy')return '育成コーチ(二軍)';if(role==='youthHead')return '二軍監督';}if(role==='academy'&&!['サッカー','バスケットボール'].includes(sp))return '若手の育成コーチ';return COACH_ROLE[role][0];}
+const hasSecond=L=>['サッカー','バスケットボール','野球'].includes(L.sportName);
+function coachSalary(team,role){const r=COACH_ROLE[role];const a=clubAvgMan(team);return Math.max(400,Math.round(Math.min(r[3],a!=null?a*r[1]:r[2])*(0.9+R()*0.2)));}
+function teamPlace(name){
+  for(const src of [PRO_DOM,PRO_ABROAD,PRO])for(const sp in src)for(const sx of ['m','f'])for(const t of ((src[sp]||{})[sx]||[]))if(t[0]===name)return {place:t[1],country:src===PRO_ABROAD?t[2]:null};
+  return null;
+}
+function moveToTeam(L,name){
+  const tp=teamPlace(name);if(!tp)return;
+  if(tp.country){if(!L.loc.abroad||L.loc.label!==tp.country)setLoc(L,{inPref:false,abroad:true,muni:null,label:tp.country});}
+  else if(cityMuni(tp.place)!=null){const mi=cityMuni(tp.place);if(L.loc.muni!==mi)setLoc(L,{inPref:true,muni:mi,label:MUNI[mi].city});}
+  else if(L.loc.label!==tp.place)setLoc(L,{inPref:false,muni:null,label:tp.place});
+}
+function setCoach(L,team,role,keepYears){
+  const sal=coachSalary(team,role);const prev=L.job&&L.job.coach?L.job:null;
+  L.job={size:'coach',coach:true,role,company:team,inPref:L.loc.inPref,label:`${team} ${roleName(L,role)}`,salary:sal,years:keepYears&&prev?prev.years:0,since:L.age};
+  L.retiredAthlete=true;L.athleteDone=true;moveToTeam(L,team);
+  return sal;
+}
+function coachOpt(L,team,role,label,vals,w){
+  const est=coachSalary(team,role);
+  return opt(label||`${team}の${roleName(L,role)}になる`,L=>{const sal=setCoach(L,team,role);mark(L,1,roleName(L,role));turn(L,`${team}の${roleName(L,role)}に`);return {text:`${team}の${roleName(L,role)}になった。年収は約${yen(Math.round(sal/10)*10)}(仮定)。`,hot:true};},vals||['love','local'],`年収 約${yen(Math.round(est/10)*10)}`,w||1);
+}
+// 監督のオファーを出すチーム(いまのチーム+同じ競技のほかのチーム)
+function headTeams(L,n){
+  const own=L.job.company;const list=(((PRO_DOM[L.sportName]||{})[L.sex])||[]).map(t=>t[0]).filter(x=>x!==own);
+  const abr=(((PRO_ABROAD[L.sportName]||{})[L.sex])||[]).map(t=>t[0]).filter(x=>x!==own);
+  const out=[];if(R()<0.6)out.push(own);
+  list.sort(()=>R()-.5).slice(0,n).forEach(x=>out.push(x));
+  if((L.caps||0)>0&&abr.length&&R()<0.25)out.push(pick(abr));
+  return [...new Set(out)].slice(0,n+1);
+}
+function roleOfferScene(L,title,body,offers,stay){
+  if(stay==='指導から離れ、一般の会社で働く')return scene({title:`${L.age}歳 ${title}`,body,stats:['aCoach'],opts:[...offers.map(o=>coachOpt(L,o.team,o.role,`${o.role==='head'?'監督':roleName(L,o.role)}: ${o.team}`,['work','love'],1.2)),opt(stay,L=>{const co=newCompany(L);L.job.coach=false;turn(L,`指導から離れ、${co.name}へ`);return {text:`指導から離れ、${co.name}で働きはじめた。`,hot:true};},['family','money'])]});
+  const opts=offers.map(o=>coachOpt(L,o.team,o.role,`${o.role==='head'?'監督':roleName(L,o.role)}: ${o.team}${teamPlace(o.team)?'('+teamPlace(o.team).place+')':''}`,['work','love'],o.role==='head'?1.5:1.2));
+  opts.push(opt(stay||'いまの役割を続ける',L=>{L.job.declinedAt=L.age;return {text:'いまの役割を続けることにした。'};},['family','local']));
+  return scene({title:`${L.age}歳 ${title}`,body,stats:['aCoach'],opts});
+}
+function licScene(L){
+  const next=L.coachLic?'最上位の指導者ライセンス':'上級の指導者ライセンス';
+  return scene({title:`${L.age}歳 指導者ライセンス`,body:`${next}の講習を受けられることになりました。数か月かけて学び、試験を受けます。${L.sportName==='サッカー'?'Jリーグのトップチームの監督になるには、日本サッカー協会の最上位のライセンスが必要です。':''}`,stats:['aCoach'],opts:[
+    opt('講習を受ける',L=>{L.savings-=50;fx(L,{k:4,h:-1});if(R()<0.75){L.coachLic=(L.coachLic||0)+1;turn(L,`${next}を取得`);return {text:`${next}を取得した。`,hot:true};}return {text:'試験には届かなかった。また次の機会をめざす。'};},['learn','work'],'費用 約50万円',1.4),
+    opt('今回は見送る',L=>({text:'今回は講習を見送った。'}),['family'])
+  ]});
+}
+function coachYear(L,Q){
+  const c=L.job;c.years=(c.years||0)+1;const a=L.age;
+  if(a>=65){retire(L);addLog(L,'指導の現場を退いた。','work',true);turn(L,'指導の現場を退いた');return;}
+  if(c.role==='head'){
+    const r=R();
+    if(r<0.25){c.salary=Math.round(c.salary*1.1);fx(L,{j:4});addLog(L,`監督として率いた${c.company}が好成績をおさめた。`,'work',true);mark(L,1,'好成績');}
+    else if(r<0.45){fx(L,{j:-3,h:-1});
+      if(R()<0.45){addLog(L,`成績不振で、${c.company}の監督を解任された。`,'work',true);turn(L,`${c.company}の監督を解任`);
+        const offers=headTeams(L,2).filter(t=>t!==c.company).slice(0,2).map(t=>({team:t,role:R()<0.5?'head':'topcoach'}));
+        offers.push({team:c.company,role:'academy'});
+        Q.push(roleOfferScene(L,'次の仕事','監督を退くことになりました。指導を続けるなら、次の行き先を選びます。',offers,'指導から離れ、一般の会社で働く'));
+        L.job={...c,role:'topcoach',label:`${c.company} コーチ`};L.job.pendingFire=true;return;}
+      addLog(L,`${c.company}は不振のシーズンだった。`,'work');}
+    if(R()<0.08){const offers=headTeams(L,2).filter(t=>t!==c.company).map(t=>({team:t,role:'head'}));if(offers.length)Q.push(roleOfferScene(L,'監督のオファー',`監督としての実績を見て、ほかのクラブからオファーが届きました。`,offers,`${c.company}で続ける`));}
+    return;
+  }
+  if(c.declinedAt&&a-c.declinedAt<3)return;
+  if(c.role!=='scout'&&(L.coachLic||0)<2&&c.years>=2&&R()<0.3&&!L.licAskedAt){L.licAskedAt=a;Q.push(licScene(L));return;}
+  if(L.licAskedAt&&a-L.licAskedAt>=3)L.licAskedAt=0;
+  const needLic=L.sportName==='サッカー'?2:1;
+  if(c.role==='academy'&&hasSecond(L)&&c.years>=3&&R()<0.15)Q.push(roleOfferScene(L,`${roleName(L,'youthHead')}の話`,`${c.company}で${roleName(L,'youthHead')}を任せたいと声がかかりました。`,[{team:c.company,role:'youthHead'}]));
+  else if((c.role==='topcoach'||c.role==='youthHead')&&c.years>=3&&(L.coachLic||0)>=needLic&&R()<0.15){
+    const offers=headTeams(L,2).map(t=>({team:t,role:'head'}));
+    Q.push(roleOfferScene(L,'監督就任の話','指導者としての経験と実績が認められ、監督就任の話が来ました。',offers));
+  }
+  else if(c.role==='scout'&&c.years>=3&&R()<0.1)Q.push(roleOfferScene(L,'コーチの話',`${c.company}で、育成のコーチをやってみないかと声がかかりました。`,[{team:c.company,role:'academy'}]));
+  else if(c.role==='academy'&&c.years>=(hasSecond(L)?4:3)&&R()<(hasSecond(L)?0.08:0.15))Q.push(roleOfferScene(L,'トップチームのコーチの話',`${c.company}のトップチームのコーチに呼ばれました。`,[{team:c.company,role:'topcoach'}]));
+}
+
 function judgeUni(L,u,p){
   if(R()<p){
     L.school={type:'univ',name:u.name,end:L.age+4,inPref:u.inPref,city:u.city||u.muni,abroad:!!u.abroad};
@@ -1624,17 +1707,18 @@ function stepYear(){
   if(L.school&&L.school.type!=='hs'&&L.school.end===a)Q.push(gradScene(L));
   const working=L.job&&!L.retired;
   if(a===L.sched.love&&!L.married)Q.push(loveScene(L));
-  if(a===L.sched.transfer&&working&&!L.unemp&&!L.job.athlete)Q.push(transferScene(L));
+  if(a===L.sched.transfer&&working&&!L.unemp&&!L.job.athlete&&!L.job.coach)Q.push(transferScene(L));
   if(working&&L.unemp&&a>L.unempAt){L.unemp=false;const co=newCompany(L);addLog(L,`${co.name}で新しく働きはじめた。`,'work');turn(L,`${co.name}で再就職`);}
   if(a>=L.sched.house&&a<=38&&!L.ownHouse&&!L.houseAsked&&working){L.houseAsked=true;Q.push(houseScene(L));}
   if(a>=L.sched.care&&a<=62&&!L.careAsked){const p=L.parents.find(p=>p.alive&&p.age>=75);if(p){L.careAsked=true;Q.push(careScene(L,p));}}
-  if(working&&!L.retired&&!L.job.athlete&&a===teinenOf(L))Q.push(retireScene(L));
-  if(L.job&&!L.job.athlete&&!L.retired&&a>teinenOf(L)){retire(L);}
+  if(working&&!L.retired&&!L.job.athlete&&!L.job.coach&&a===teinenOf(L))Q.push(retireScene(L));
+  if(L.job&&!L.job.athlete&&!L.job.coach&&!L.retired&&a>teinenOf(L)){retire(L);}
   if(L.reemp===a)addLog(L,'定年後の仕事を終えた。','work');
   if(L.age>=L.sched.snow&&!L.snowAsked&&L.loc.inPref&&muniOf(L).snow>=2&&a<=85){L.snowAsked=true;L.stats.add('snowex');Q.push(snowScene(L));}
   if(a===75)Q.push(licenseScene(L));
   if(L.job&&L.job.athlete){if(a>=L.job.until){L.job.athlete=false;Q.push(proRetireScene(L));}else if(L.job.size==='pro'){const cs0=clubSalary(L.job.company,L.job.tier||'low');const ns=Math.max(300,Math.round((cs0?0.5*L.job.salary+0.5*cs0:L.job.salary)*(1+gauss()*(cs0?0.1:0.15))));const cs=contractScene(L,ns);if(cs)Q.push(cs);else L.job.salary=ns;}}
   if(L.job&&L.job.athlete&&R()<natP(L))Q.push(natScene(L));
+  if(L.job&&L.job.coach&&!L.retired)coachYear(L,Q);
   if(canPromote(L)){const nx=(L.job.rank||0)+1;if(nx<RANKS.length&&a>=RANK_AGE[nx]&&(!L.promoAskedAt||a-L.promoAskedAt>=3)&&R()<RANK_P[nx]*(1+0.04*L.career)*(0.6+L.m.k/150+L.m.r/150))Q.push(promoScene(L));}
   if(L.school&&L.school.type==='univ'&&!L.school.abroad&&a===L.school.end-2&&!L.studyAsked&&abroadOK(L,'study')){L.studyAsked=true;Q.push(studyScene(L));}
   // 出来事
@@ -1678,7 +1762,7 @@ function randomEvents(L){
     if(R()<0.75){addLog(L,`${ILL[L.illness.type]}の治療がひと区切りついた。`,'health');L.illness=null;}else L.illness.until=a+1;
   }
   // 失業
-  if(L.job&&!L.job.athlete&&!L.retired&&!L.unemp&&a>=20&&a<=59){
+  if(L.job&&!L.job.athlete&&!L.job.coach&&!L.retired&&!L.unemp&&a>=20&&a<=59){
     const f=focusDef(L);const p=0.025*(f&&f[0]==='work'?0.7:1);
     if(R()<p){L.unemp=true;L.unempAt=a;fx(L,{j:-6});addLog(L,'勤め先を離れることになり、仕事を探しはじめた。','work',true);mark(L,1,'失業');turn(L,'失業');L.stats.add('aUnemp');}
   }
