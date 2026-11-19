@@ -576,6 +576,7 @@ const STAT={
   teinen:['real','定年を一律に定めている企業の定年年齢は、60歳72.3%、65歳21.1%、66歳以上3.5%(厚生労働省 就労条件総合調査、令和4年)。公務員の定年は2031年度までに65歳へ引き上げ。65歳までの雇用確保は法律で企業の義務。'],
   aRet:['assume','選手の格による引退年齢の差(上位+3歳・中位−0.5歳・下位−3歳。ゲーム内でプロになる人の平均が統計に近づくように調整)とばらつき(標準偏差2.5歳)は仮定。野球とサッカー以外の競技は公表値がないため、2つの平均(26.6歳)で代用しています。'],
   aCoach:['assume','引退した選手は、アカデミー(育成)のコーチ・トップチームのコーチ・スカウトになれます。経験を積み、指導者ライセンスを取ると、ユース監督やトップチームの監督の話が来ることがあります。サッカーはトップチームの監督に日本サッカー協会の最上位のライセンスが必要です。年俸(クラブの選手の平均年俸の0.12〜1.5倍。育成コーチとスカウトは1,500万円、ユース監督は2,500万円、コーチは1億5,000万円が上限。データのないチームは450万〜2,000万円が目安)、声がかかる確率、解任の確率は仮定です。'],
+  aLife:['assume','お金と暮らしの見直しの数字はゲーム上の目安です。預け先の平均利回り(預金1.25%、債券2%、半々のファンド3.5%、株式インデックス5%、不動産ファンド3.5%、自分で売買3%)と値動きの大きさ、冠婚葬祭費(年15万・7.5万・1万円)、保険料(年20万円で病院代の自己負担が3割に、70歳前に亡くなると保険金約2,000万円)、食生活(費用と病気のなりやすさ0.85〜1.15倍)、旅行や講座などの費用と効果はすべて仮定です。'],
   aAch:['assume','実績の中身はゲーム上の決まりです。'],
   aSport:['assume','県外の推薦先は、スポーツ推薦や特待で県外からも選手を受け入れている実在の私立の強豪校(大阪桐蔭、青森山田など)です。推薦の条件・合格しやすさ(県外は85%)は仮定です。スポーツ推薦は、運動や部活を重点にした年数・運動部・好きなこと・健康から出す「競技の力」で声がかかる仮定です。推薦先の学校は候補からの抽選で、実際の推薦枠を示すものではありません。高校は合格しやすさ90%、大学は50〜90%としています。'],
   snowex:['real','令和2年度の大雪では県内で死者21人、死傷者364人。屋根の雪下ろし中の事故が多くを占めました。']
@@ -788,8 +789,9 @@ function finance(L){
   if(L.carePay>0){net-=L.carePay;}
   if(L.loan>0){const pay=Math.min(L.loan/0.85,L.loanPay||110);net-=pay;L.loan=Math.max(0,L.loan-pay*0.85);if(L.loan<1){L.loan=0;addLog(L,'住宅ローンを払い終えた。','home');}}
   L.income=inc; if(st!=='senior')L.incPension=0; L.netFlow=net; if(inc>(L.maxIncome||0)){L.maxIncome=inc;L.maxIncomeAge=L.age;}
+  if(L.mset&&(st==='work'||st==='senior'))net-=lifeExtra(L);
   L.savings+=net;
-  if(L.savings>0)L.savings*=1.01;
+  investReturn(L);
 }
 const netWorth=L=>L.savings-L.loan;
 
@@ -1410,6 +1412,105 @@ function coachYear(L,Q){
   else if(c.role==='academy'&&c.years>=(hasSecond(L)?4:3)&&R()<(hasSecond(L)?0.08:0.15))Q.push(roleOfferScene(L,'トップチームのコーチの話',`${c.company}のトップチームのコーチに呼ばれました。`,[{team:c.company,role:'topcoach'}]));
 }
 
+/* ---------- お金と暮らしの見直し(30歳・40歳、20歳からはボタンでいつでも) ----------
+   利回り・費用・効果はすべてゲーム上の目安(仮定)。金額は万円 */
+const INVEST={dep:['預金',1.25,0,'実質で年1〜1.5%'],bond:['債券',2,3,'平均2%前後、値動きは小さい'],bal:['株と債券を半々にしたファンド',3.5,8,'平均3.5%、値動きは中くらい'],idx:['株式(インデックス)',5,16,'平均5%、値動きが大きい'],reit:['不動産ファンド',3.5,14,'平均3.5%'],pick:['自分で銘柄を選んで売買',3,25,'ほとんどの人は指数より稼げない']};
+const KANKON={full:['きちんと包む',15,0],half:['無理なく半分だけ',7.5,-0.3],min:['気持ちだけ伝える',1,-0.8]};
+const INSUR={basic:['基本の保障だけ',0],full:['保険にしっかり入る',20]};
+const DIET={norm:['まわりの人と同じように食べる',0,1,0],light:['薄味で、野菜・雑穀を意識する',5,0.85,0.3],out:['外食・出前が多め',20,1.15,-0.3]};
+const AUTO={course:['資格・職業講座',2,43.3,{k:4}],meal:['家族・友人と外食・プレゼント',1,8.7,{r:4,j:2}],trip:['国内旅行',1,17.3,{j:2,k:1}],abroad:['海外旅行',2,41.8,{j:3,k:2}],donate:['寄付する',1,14.4,{j:4,r:2}],hobby:['趣味の道具・レッスン',1,14.4,{j:3}]};
+const AUTO_RICH=['meal','trip','abroad','donate','hobby'];
+const TYPICAL_INCOME=400;
+function mset(L){if(!L.mset)L.mset={inv:'dep',kankon:'full',insur:'basic',diet:'norm',auto:{}};return L.mset;}
+const insMul=L=>L.mset&&L.mset.insur==='full'?0.3:1;
+const dietIll=L=>L.mset?DIET[L.mset.diet][2]:1;
+function lifeExtra(L){const m=L.mset;if(!m)return 0;return KANKON[m.kankon][1]+INSUR[m.insur][1]+DIET[m.diet][1]+(L.pet?15:0);}
+function investReturn(L){
+  const m=L.mset;if(!m){if(L.savings>0)L.savings*=1.01;return;}
+  if(L.savings<=0)return;
+  const iv=INVEST[m.inv];const r=(iv[1]+iv[2]*gauss())/100;const d=L.savings*r;L.savings+=d;
+  if(r<-0.1&&d<-100)addLog(L,`相場が大きく下がり、${iv[0]}の資産が約${yen(-d)}減った。`,'',true);
+  else if(r>0.15&&d>100)addLog(L,`相場が大きく上がり、${iv[0]}の資産が約${yen(d)}増えた。`);
+}
+function moneyIntro(L,manual){
+  mset(L);L.stats.add('aLife');
+  return scene({title:`${L.age}歳 お金と暮らしの見直し`,body:`${manual?'':'節目の年です。'}お金の預け先や暮らし方、続けていくこと、今年使うお金を決めます。(いまの預け先: ${INVEST[L.mset.inv][0]})`,stats:['aLife'],opts:[
+    opt('順番に見直す',()=>({next:[investScene(L)]}),[],'',2),
+    opt('今年使うお金だけ決める',()=>({next:[spendScene(L)]}),[],'',0.6),
+    opt('今回は見直さない',()=>({text:'今回は、いまの暮らし方を続けることにした。'}),[],'',0.4)
+  ]});
+}
+function investScene(L){
+  const m=mset(L);
+  return scene({title:`${L.age}歳 余裕資金の運用`,body:`貯金をどこに預けるかを決めます。値動きが大きいものほど、増える年も減る年もあります。(いま: ${INVEST[m.inv][0]})`,stats:['aLife'],opts:Object.keys(INVEST).map(k=>opt(INVEST[k][0],L=>{L.mset.inv=k;return {text:`お金の預け先を「${INVEST[k][0]}」にした。`,next:[kankonScene(L)]};},{dep:['money','family'],bond:['money'],bal:['money','work'],idx:['work','free'],reit:['money'],pick:['free','work']}[k],INVEST[k][3],k===m.inv?2:1))});
+}
+function kankonScene(L){
+  const m=mset(L);
+  return scene({title:`${L.age}歳 冠婚葬祭費`,body:'友人の結婚式や親戚の葬儀で包むお金です。少なくすればお金は節約できますが、関係が少し疎遠になることもあります。',stats:['aLife'],opts:Object.keys(KANKON).map(k=>opt(KANKON[k][0],L=>{L.mset.kankon=k;return {next:[insurScene(L)]};},k==='full'?['family','local']:k==='half'?['money']:['free','money'],`年 約${yen(KANKON[k][1])}${KANKON[k][2]<0?' / 人間関係が少しずつ↓':''}`,k===m.kankon?2:1))});
+}
+function insurScene(L){
+  const m=mset(L);
+  return scene({title:`${L.age}歳 保険`,body:'しっかり入ると毎年保険料がかかりますが、病院代の自己負担が大きく減り、70歳前に亡くなれば家族に保険金が出ます。たいていは払った保険料のほうが戻ってくるお金より多くなります。',stats:['aLife'],opts:Object.keys(INSUR).map(k=>opt(INSUR[k][0],L=>{L.mset.insur=k;return {next:[dietScene(L)]};},k==='full'?['family','health']:['money','free'],k==='full'?`保険料 年 約${yen(INSUR[k][1])}`:'保険料はほとんどかからない',k===m.insur?2:1))});
+}
+function dietScene(L){
+  const m=mset(L);
+  return scene({title:`${L.age}歳 食生活`,body:'食事に気を配ると買い物に少しお金がかかりますが、高血圧や糖尿病のような病気になりにくくなります。外食や出前は手軽ですが、お金がかかり、病気も少しなりやすくなります。',stats:['aLife'],opts:Object.keys(DIET).map(k=>opt(DIET[k][0],L=>{L.mset.diet=k;return {next:[autoScene(L)]};},k==='light'?['health']:k==='out'?['free','work']:['family'],`年 約${yen(DIET[k][1])}${k==='light'?' / 病気になりにくい':k==='out'?' / 病気に少しなりやすい':''}`,k===m.diet?2:1))});
+}
+function autoScene(L){
+  const m=mset(L);
+  const opts=Object.keys(AUTO).map(k=>{const a=AUTO[k];const on=!!m.auto[k];
+    return opt(`${on?'【オン】':'【オフ】'}${a[0]} · ${a[1]===1?'毎年':a[1]+'年ごと'}`,L=>{if(on)delete L.mset.auto[k];else L.mset.auto[k]=L.age;return {next:[autoScene(L)]};},{course:['learn','work'],meal:['family'],trip:['love','free'],abroad:['free','learn'],donate:['local'],hobby:['love']}[k],`1回 約${yen(a[2])}`,0.35);});
+  opts.push(opt('これで決める',()=>({next:[spendScene(L)]}),[],'',3));
+  return scene({title:`${L.age}歳 自動で続けること`,body:'オンにしておくと、時期が来るたびに自動で行います。お金がかかるものは、貯金が費用の3倍を超えるときだけ行います。外食・旅行・レッスン・寄付は、使ったあとも一般的な人の1年分の収入(約400万円)が残るときだけ行います。オンにするほど、貯まるお金は減ります。押すたびにオン・オフが切り替わります。',stats:['aLife'],opts});
+}
+function spendItems(L){
+  const it=[];const add=(id,label,cost,eff,note,fn,vals)=>it.push({id,label,cost,eff,note,fn,vals});
+  const mate=L.married&&L.spouseAlive;
+  add('meal','家族・友人と外食・プレゼント',8.7,{r:4,j:2},'人間関係 +4 · 幸福 +2',null,['family']);
+  add('treat','友人たちにごちそうする',7.2,{r:5},'人間関係 +5',null,['local']);
+  if(mate)add('tripP','国内旅行(連れ合いと二人で)',26,{j:3,r:2,k:1},'幸福 +3 · 知識 少し↑',null,['family','love']);
+  add('tripF','国内旅行(友人たちと)',17.3,{j:2,r:1,k:1},'幸福 +2 · 知識 少し↑',null,['local','free']);
+  add('tripS','国内旅行(一人で)',17.3,{j:2,k:1},'幸福 +2 · 知識 少し↑',null,['free']);
+  if(mate)add('abP','海外旅行(連れ合いと二人で)',62.6,{j:4,r:2,k:2},'幸福 +4 · 知識 ↑',null,['family','love']);
+  add('abF','海外旅行(友人たちと)',41.8,{j:3,r:1,k:2},'幸福 +3 · 知識 ↑',null,['free','learn']);
+  if(L.parents.some(p=>p.alive))add('remit','両親への仕送り・医療費',24.5,{r:5},'人間関係 +5 · 両親の健康 ↑',L=>{L.remitYear=L.age+1;},['family']);
+  add('donate','寄付する',14.4,{j:4,r:2},'幸福 +4 · 人間関係 +2',null,['local']);
+  add('course','資格・職業講座',43.3,{k:4},'知識 ↑ · 仕事の評価が少し上がる',L=>{L.career+=1;},['learn','work']);
+  [['tech','技術・整備'],['cook','調理・美容'],['care','介護・保育'],['office','事務・パソコン']].forEach(([k,n])=>add('tr_'+k,`職業訓練: ${n}`,11.5,{k:2},'知識 少し↑',L=>{L.trained=n;},['work','learn']));
+  if(L.job&&!L.retired&&!L.job.athlete&&!L.job.coach)add('hunt','転職先を探す',0,{},'来年、仕事の話が来る可能性 ↑',L=>{L.jobHunt=L.age+1;},['work','free']);
+  if(L.edu!=='univ'&&!L.uniUntil&&L.age<55){
+    add('night','働きながら学ぶ: 夜間大学(4年)',231,{k:3},'学士号 · 収入↑',L=>{L.uniUntil=L.age+4;L.uniOk=true;},['learn','work']);
+    add('corr','働きながら学ぶ: 通信制大学(5年ほど・修了は半分ほど)',43.3,{k:2},'学費が安い · 学士号 · 収入↑',L=>{L.uniUntil=L.age+5;L.uniOk=R()<0.5;},['learn']);
+  }
+  add('hobbyL','趣味の道具・レッスンで腕を上げる',14.4,{j:3,k:1},'幸福 +3',null,['love']);
+  add('hobbyN','新しい趣味を探す',5.8,{j:2},'幸福 +2',null,['love','free']);
+  if(!L.pet)add('pet','ペットを迎える',10,{j:3,r:1},'毎年 幸福・人間関係が少し↑ · 世話に毎年約15万円',L=>{L.pet=L.age;},['family','love']);
+  if(!L.bike)add('bike','自転車を買う',2.2,{j:3},'幸福 +3 · 乗って出かければ健康↑',L=>{L.bike=true;},['health','free']);
+  return it;
+}
+function spendScene(L,used){
+  used=used||[];
+  const items=spendItems(L).filter(x=>!used.includes(x.id)&&(x.cost===0||L.savings>=x.cost));
+  const opts=items.map(x=>opt(x.label,L=>{L.savings-=x.cost;fx(L,x.eff);if(x.fn)x.fn(L);turn(L,x.label);return {text:`${x.label}${x.cost?`(約${yen(x.cost)})`:''}。`,next:[spendScene(L,[...used,x.id])]};},x.vals||[],`${x.note}${x.cost?' / '+yen(x.cost):' / 無料'}`,0.3));
+  opts.push(opt('これで終わる',()=>({text:'見直しを終えた。'}),[],'',3));
+  return scene({title:`${L.age}歳 今年使うお金`,body:`今年、お金を使うことを選べます。いくつでも選べます(いまの貯金: 約${yen(Math.max(0,L.savings))})。お金が足りないものは出てきません。`,stats:['aLife'],opts});
+}
+// 毎年の効果
+function moneyYear(L,Q){
+  const m=L.mset;const a=L.age;
+  if(L.uniUntil===a){if(L.uniOk){L.edu='univ';addLog(L,'働きながら学び、大学を卒業して学士号を取った。','learn',true);turn(L,'働きながら大学を卒業');mark(L,1,'学士号');}else addLog(L,'通信制大学は、修了まで続けられなかった。','learn');L.uniUntil=null;}
+  if(L.jobHunt===a){L.jobHunt=null;if(L.job&&!L.retired&&!L.unemp&&!L.job.athlete&&!L.job.coach)Q.push(transferScene(L));}
+  if(L.pet){fx(L,{j:1,r:1});if(a-L.pet>=14){L.pet=null;addLog(L,'長く一緒に暮らしたペットを見送った。','family',true);fx(L,{j:-4});}}
+  if(L.bike&&a<75)fx(L,{h:0.3});
+  if(!m)return;
+  fx(L,{r:KANKON[m.kankon][2],h:DIET[m.diet][3]});
+  const done=[];
+  for(const k in m.auto){const it=AUTO[k];if((a-m.auto[k])%it[1]!==0)continue;
+    if(L.savings<=it[2]*3)continue;if(AUTO_RICH.includes(k)&&L.savings-it[2]<TYPICAL_INCOME)continue;
+    L.savings-=it[2];fx(L,it[3]);if(k==='course')L.career+=1;done.push(it[0]);}
+  if(done.length)addLog(L,`いつものように: ${done.join('・')}。`);
+}
+
 function judgeUni(L,u,p){
   if(R()<p){
     L.school={type:'univ',name:u.name,end:L.age+4,inPref:u.inPref,city:u.city||u.muni,abroad:!!u.abroad};
@@ -1650,8 +1751,8 @@ const ILL={cancer:'がん',heart:'心臓の病気',brain:'脳の病気',other:'�
 function illScene(L){
   L.stats.add('aIll');
   return scene({title:`${L.age}歳 治療の選択`,body:`${ILL[L.illness.type]}と診断されました。治療の方針を決めます。`,stats:['aIll'],opts:[
-    opt('標準的な治療を受ける',L=>{fx(L,{h:5});L.savings-=30;return {text:'標準的な治療を受けた。'};},['health','money'],'',1.6),
-    opt('負担は大きいが、積極的な治療に挑む',L=>{L.savings-=60;fx(L,{j:-2});if(R()<.6){fx(L,{h:10});return {text:'積極的な治療を受け、手ごたえがあった。'};}fx(L,{h:-4});return {text:'積極的な治療を受けたが、体への負担が大きかった。'};},['work','learn']),
+    opt('標準的な治療を受ける',L=>{fx(L,{h:5});L.savings-=30*insMul(L);return {text:'標準的な治療を受けた。'};},['health','money'],'',1.6),
+    opt('負担は大きいが、積極的な治療に挑む',L=>{L.savings-=60*insMul(L);fx(L,{j:-2});if(R()<.6){fx(L,{h:10});return {text:'積極的な治療を受け、手ごたえがあった。'};}fx(L,{h:-4});return {text:'積極的な治療を受けたが、体への負担が大きかった。'};},['work','learn']),
     opt('痛みを和らげ、暮らしを大切にする',L=>{fx(L,{h:-2,j:4});return {text:'暮らしを大切にする治療を選んだ。'};},['family','free','love'],'',0.6)
   ]});
 }
@@ -1680,7 +1781,7 @@ function stepYear(){
   L.age++;
   const a=L.age;
   // 家族の年
-  for(const p of L.parents){if(!p.alive)continue;p.age++;if(R()<hz(p.age-1,p.sex)*MORTK){p.alive=false;addLog(L,`${p.role}が${p.age}歳で亡くなった。`,'family',true);mark(L,2,`${p.role}の死`);fx(L,{j:-8,r:-2});turn(L,`${p.role}との別れ`);}}
+  for(const p of L.parents){if(!p.alive)continue;p.age++;if(R()<hz(p.age-1,p.sex)*MORTK*(L.remitYear===a?0.8:1)){p.alive=false;addLog(L,`${p.role}が${p.age}歳で亡くなった。`,'family',true);mark(L,2,`${p.role}の死`);fx(L,{j:-8,r:-2});turn(L,`${p.role}との別れ`);}}
   if(L.married&&L.spouseAlive){L.spouseAge++;if(R()<hz(L.spouseAge-1,L.sex==='m'?'f':'m')*MORTK){L.spouseAlive=false;addLog(L,`連れ合いが${L.spouseAge}歳で亡くなった。`,'family',true);mark(L,2,'死別');fx(L,{j:-12,r:-4});turn(L,'連れ合いとの別れ');}}
   for(const k of L.kids){if(k.alive&&R()<hz(a-k.born,k.sex)*MORTK*0.6){k.alive=false;addLog(L,'子どもを亡くした。','family',true);fx(L,{j:-15});mark(L,2,'子の死');}}
   // 学校の節目
@@ -1695,6 +1796,7 @@ function stepYear(){
   // 場面
   const Q=G.queue;
   if(MILE[a])Q.push(mileScene(a));
+  if(a===30||a===40)Q.push(moneyIntro(L));
   if(a===7)Q.push(likeScene(L));
   if(a===12)Q.push(clubScene(L));
   if(a===15&&youthOK(L,'U-18'))Q.push(youthScene(L,'U-18'));
@@ -1719,6 +1821,7 @@ function stepYear(){
   if(L.job&&L.job.athlete){if(a>=L.job.until){L.job.athlete=false;Q.push(proRetireScene(L));}else if(L.job.size==='pro'){const cs0=clubSalary(L.job.company,L.job.tier||'low');const ns=Math.max(300,Math.round((cs0?0.5*L.job.salary+0.5*cs0:L.job.salary)*(1+gauss()*(cs0?0.1:0.15))));const cs=contractScene(L,ns);if(cs)Q.push(cs);else L.job.salary=ns;}}
   if(L.job&&L.job.athlete&&R()<natP(L))Q.push(natScene(L));
   if(L.job&&L.job.coach&&!L.retired)coachYear(L,Q);
+  moneyYear(L,Q);
   if(canPromote(L)){const nx=(L.job.rank||0)+1;if(nx<RANKS.length&&a>=RANK_AGE[nx]&&(!L.promoAskedAt||a-L.promoAskedAt>=3)&&R()<RANK_P[nx]*(1+0.04*L.career)*(0.6+L.m.k/150+L.m.r/150))Q.push(promoScene(L));}
   if(L.school&&L.school.type==='univ'&&!L.school.abroad&&a===L.school.end-2&&!L.studyAsked&&abroadOK(L,'study')){L.studyAsked=true;Q.push(studyScene(L));}
   // 出来事
@@ -1729,7 +1832,7 @@ function stepYear(){
 }
 function updateMeters(L){
   const a=L.age;const f=focusDef(L);
-  const tg={h:expH(a)-2.1,j:62,k:a<23?66:60,r:62};
+  const tg={h:expH(a)-1.8,j:62,k:a<23?66:60,r:62};
   if(L.illness)tg.h-=12;
   for(const k in L.m){
     let d=(tg[k]-L.m[k])*0.12+gauss()*1.1;
@@ -1755,7 +1858,7 @@ function randomEvents(L){
   // 病気
   if(!L.illness&&a>=20){
     const mult=clamp(Math.exp((expH(a)-L.m.h)/28),0.5,3);
-    const p=0.0006*Math.exp(0.075*(a-30))*mult;
+    const p=0.0006*Math.exp(0.075*(a-30))*mult*dietIll(L);
     if(R()<p){const t=wpick(Object.keys(ILL),k=>({cancer:55,heart:20,brain:15,other:10})[k]);L.illness={type:t,until:a+ri(1,4)};L.illCount++;
       fx(L,{h:t==='other'?-8:t==='cancer'?-12:-15,j:-4});addLog(L,`${ILL[t]}と診断された。`,'health',true);mark(L,3,ILL[t]);turn(L,`${ILL[t]}と診断`);G.queue.push(illScene(L));}
   } else if(L.illness&&a>=L.illness.until){
@@ -1890,6 +1993,7 @@ function causeOf(L){
 }
 function die(L,cause){
   L.alive=false;L.deathAge=L.age;L.cause=cause||causeOf(L);
+  if(L.mset&&L.mset.insur==='full'&&L.age<70&&((L.married&&L.spouseAlive)||L.kids.some(k=>k.alive)))L.log.push({age:L.age,text:'入っていた保険から、家族に保険金(約2,000万円・仮定)が支払われた。',hot:true});
   L.log.push({age:L.age,text:`${L.cause}で、${L.age}歳の人生を終えた。`,hot:true});
   L.yearEv=[{text:`${L.cause}で亡くなった。`,hot:true}];
   G.queue=[scene({kind:'death',title:`${L.age}歳で、人生を終えた`,body:`${MUNI[L.birth].name}で生まれた${L.name}さんの人生は、${L.age}歳で終わりました。死因は大まかに「${L.cause}」です。`,opts:[opt('人生をふりかえる',()=>{showEnd();return null;})]})];
@@ -2059,7 +2163,8 @@ function renderPlay(){
   $('focus').querySelectorAll('button').forEach(b=>b.onclick=()=>{L.focus=b.dataset.k;renderPlay();});
   // お金
   const nw=netWorth(L);
-  $('assets').innerHTML=assetsHTML(L);
+  $('assets').innerHTML=assetsHTML(L)+(L.age>=20&&!G.ended?`<button class="ghost" type="button" id="b-money" style="margin-top:8px"${G.queue.length?' disabled':''}>お金と暮らしを見直す</button>`:'');
+  {const bm=$('b-money');if(bm)bm.onclick=()=>{if(G.queue.length||G.ended)return;G.queue.push(moneyIntro(L,true));renderPlay();};}
   $('income').innerHTML=incomeHTML(L);
   // メーター
   $('meters').innerHTML=['h','j','k','r'].map(k=>{const v=Math.round(L.m[k]);return `<div class="meter ${v<30?'low':''}"><span>${MNAME[k]}</span><div class="bar"><i style="width:${v}%"></i></div><span class="v">${v}</span></div>`;}).join('');
@@ -2076,7 +2181,7 @@ function renderPlay(){
 function assetsHTML(L){
   const sv=L.savings,nw=netWorth(L);
   return `<b class="num ${sv<0?'neg':''}">${yen(sv)}</b><span class="tiny muted">${sv<0?'貯金より借りたお金(奨学金など)が多い状態':'預貯金など(住まいの価値はふくめない)'}</span>
-   <dl><dt>住宅ローンの残り</dt><dd>${L.loan>0?'−'+yen(L.loan):'なし'}</dd><dt>差し引き(純資産)</dt><dd>${yen(nw)}</dd><dt>今年の増減</dt><dd>${L.netFlow==null||L.age<15?'—':(L.netFlow>=0?'+':'')+yen(L.netFlow)}</dd></dl>`;
+   <dl>${L.mset?`<dt>お金の預け先</dt><dd>${INVEST[L.mset.inv][0]}</dd>`:''}<dt>住宅ローンの残り</dt><dd>${L.loan>0?'−'+yen(L.loan):'なし'}</dd><dt>差し引き(純資産)</dt><dd>${yen(nw)}</dd><dt>今年の増減</dt><dd>${L.netFlow==null||L.age<15?'—':(L.netFlow>=0?'+':'')+yen(L.netFlow)}</dd></dl>`;
 }
 function incomeHTML(L){
   const st=stageOf(L);const pen=L.incPension||0;const work=Math.max(0,L.income-pen);
