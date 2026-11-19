@@ -603,6 +603,7 @@ const STAT={
   aRet:['assume','選手の格による引退年齢の差(上位+3歳・中位−0.5歳・下位−3歳。ゲーム内でプロになる人の平均が統計に近づくように調整)とばらつき(標準偏差2.5歳)は仮定。野球とサッカー以外の競技は公表値がないため、2つの平均(26.6歳)で代用しています。'],
   aCoach:['assume','引退した選手は、アカデミー(育成)のコーチ・トップチームのコーチ・スカウトになれます。経験を積み、指導者ライセンスを取ると、ユース監督やトップチームの監督の話が来ることがあります。サッカーはトップチームの監督に日本サッカー協会の最上位のライセンスが必要です。年俸(クラブの選手の平均年俸の0.12〜1.5倍。育成コーチとスカウトは1,500万円、ユース監督は2,500万円、コーチは1億5,000万円が上限。データのないチームは450万〜2,000万円が目安)、声がかかる確率、解任の確率は仮定です。'],
   aLife:['assume','お金と暮らしの見直しの数字はゲーム上の目安です。預け先の平均利回り(預金1.25%、債券2%、半々のファンド3.5%、株式インデックス5%、不動産ファンド3.5%、自分で売買3%)と値動きの大きさ、冠婚葬祭費(年15万・7.5万・1万円)、保険料(年20万円で病院代の自己負担が3割に、70歳前に亡くなると保険金約2,000万円)、食生活(費用と病気のなりやすさ0.85〜1.15倍)、旅行や講座などの費用と効果はすべて仮定です。'],
+  aLife2:['assume','飛行学校のあとの航空会社(日本航空・全日本空輸・トキエア)、職業訓練のあとの勤め先、海外の会社は実在の名前ですが、採用や年収は仮定です。起業がうまくいく確率(4割)、やってみたかった仕事になれる見込み(5〜20%)とその年収、車を売った値段(143万円)も仮定です。'],
   aAch:['assume','実績の中身はゲーム上の決まりです。'],
   aSport:['assume','県外の推薦先は、スポーツ推薦や特待で県外からも選手を受け入れている実在の私立の強豪校(大阪桐蔭、青森山田など)です。推薦の条件・合格しやすさ(県外は85%)は仮定です。スポーツ推薦は、運動や部活を重点にした年数・運動部・好きなこと・健康から出す「競技の力」で声がかかる仮定です。推薦先の学校は候補からの抽選で、実際の推薦枠を示すものではありません。高校は合格しやすさ90%、大学は50〜90%としています。'],
   snowex:['real','令和2年度の大雪では県内で死者21人、死傷者364人。屋根の雪下ろし中の事故が多くを占めました。']
@@ -764,7 +765,7 @@ function arrows(f){const out=[];for(const k in f[2]){if(f[2][k]>0)out.push(MNAME
 function wageBase(L){
   const a=L.age; let row=WAGE[0];
   for(const w of WAGE)if(a>=w[0])row=w;
-  if(L.job&&(L.job.size==='pro'||L.job.size==='coach'))return L.job.salary;
+  if(L.job&&['pro','coach','pilot','biz','dream'].includes(L.job.size))return L.job.salary;
   let hs=row[1],un=row[2];
   let mon=L.edu==='univ'?un:L.edu==='senmon'?hs+0.35*(un-hs):hs;
   if(a<20)mon*=0.92;
@@ -967,7 +968,7 @@ function abroadOK(L,stage){
   if(stage==='hs')return (d>=63&&P.pct<=40)||(P.intl&&P.pct<=40&&d>=50)||d>=68;
   if(stage==='uni')return d>=60||(L.school&&L.school.abroad)||(P.intl&&P.pct<=30&&d>=52);
   if(stage==='study')return L.m.k>=74||P.intl||((P.vals.includes('learn')||P.vals.includes('free'))&&L.m.k>=66);
-  if(stage==='job')return (L.school&&L.school.abroad)||L.studied||L.m.k>=80||d>=66||(P.intl&&L.m.k>=72);
+  if(stage==='job')return L.langPrep||(L.school&&L.school.abroad)||L.studied||L.m.k>=80||d>=66||(P.intl&&L.m.k>=72);
   return false;
 }
 const COUNTRY=['アメリカ','イギリス','カナダ','オーストラリア','ニュージーランド','シンガポール','ドイツ','台湾'];
@@ -1145,7 +1146,7 @@ const RANKS=['','主任','係長','課長','部長','役員'];
 const RANK_MULT=[1,1.05,1.12,1.3,1.55,2.2];
 const RANK_AGE=[0,27,32,38,45,52];
 const RANK_P=[0,0.14,0.09,0.05,0.025,0.006];
-function canPromote(L){return L.job&&!L.job.athlete&&L.job.size!=='pro'&&!L.job.coach&&!L.unemp&&!L.retired&&L.age<teinenOf(L);}
+function canPromote(L){return L.job&&!L.job.athlete&&L.job.size!=='pro'&&!L.job.coach&&!L.job.self&&!L.unemp&&!L.retired&&L.age<teinenOf(L);}
 function promoScene(L){
   const cur=L.job.rank||0,nx=cur+1;
   const now=Math.round(wageBase(L)/10)*10;
@@ -1489,30 +1490,57 @@ function autoScene(L){
   opts.push(opt('これで決める',()=>({next:[spendScene(L)]}),[],'',3));
   return scene({title:`${L.age}歳 自動で続けること`,body:'オンにしておくと、時期が来るたびに自動で行います。お金がかかるものは、貯金が費用の3倍を超えるときだけ行います。外食・旅行・レッスン・寄付は、使ったあとも一般的な人の1年分の収入(約400万円)が残るときだけ行います。オンにするほど、貯まるお金は減ります。押すたびにオン・オフが切り替わります。',stats:['aLife'],opts});
 }
+const HOBBY_LIST=['ダンス','スキー・スノーボード','釣り','ギター','写真','料理','登山','将棋','ヨガ','ランニング','絵','読書会'];
+const LIKE_HOBBY={sport:'ランニング',art:'絵',music:'ギター',book:'読書会',nature:'釣り',game:'将棋'};
+function hobbies(L){if(!L.hobbies)L.hobbies=[LIKE_HOBBY[L.like]||'ダンス'];return L.hobbies;}
+const hasCar=L=>!L.carSold&&L.license!==false&&L.loc.inPref&&L.age>=18&&!L.school;
+const freeJob=L=>L.job&&!L.retired&&!L.unemp&&!L.job.athlete&&!L.job.coach&&!L.job.self&&!L.job.self;
 function spendItems(L){
   const it=[];const add=(id,label,cost,eff,note,fn,vals)=>it.push({id,label,cost,eff,note,fn,vals});
-  const mate=L.married&&L.spouseAlive;
+  const mate=L.married&&L.spouseAlive;const lover=!L.married&&L.partner;
+  if(lover){
+    add('propose','結婚の話を切り出す',0,{},'',L=>{const yrs=L.age-L.partner.since;const p=clamp(0.3+0.08*yrs+(L.m.r-60)/100,0.1,0.9);
+      if(R()<p){const nm=L.partner.name;marry(L);L.partner=null;addLog(L,`${nm}さんと結婚した。`,'family',true);}else{fx(L,{j:-3});addLog(L,'結婚の話は、まだ早いと言われた。','family');}},['family']);
+    add('breakup','別れようと言う',0,{j:-4},'',L=>{addLog(L,`${L.partner.name}さんと別れた。`,'family',true);turn(L,'恋人と別れた');L.partner=null;L.maybeMarry=R()<0.5;},['free']);
+  }
   add('meal','家族・友人と外食・プレゼント',8.7,{r:4,j:2},'人間関係 +4 · 幸福 +2',null,['family']);
   add('treat','友人たちにごちそうする',7.2,{r:5},'人間関係 +5',null,['local']);
-  if(mate)add('tripP','国内旅行(連れ合いと二人で)',26,{j:3,r:2,k:1},'幸福 +3 · 知識 少し↑',null,['family','love']);
-  add('tripF','国内旅行(友人たちと)',17.3,{j:2,r:1,k:1},'幸福 +2 · 知識 少し↑',null,['local','free']);
-  add('tripS','国内旅行(一人で)',17.3,{j:2,k:1},'幸福 +2 · 知識 少し↑',null,['free']);
-  if(mate)add('abP','海外旅行(連れ合いと二人で)',62.6,{j:4,r:2,k:2},'幸福 +4 · 知識 ↑',null,['family','love']);
-  add('abF','海外旅行(友人たちと)',41.8,{j:3,r:1,k:2},'幸福 +3 · 知識 ↑',null,['free','learn']);
-  if(L.parents.some(p=>p.alive))add('remit','両親への仕送り・医療費',24.5,{r:5},'人間関係 +5 · 両親の健康 ↑',L=>{L.remitYear=L.age+1;},['family']);
-  add('donate','寄付する',14.4,{j:4,r:2},'幸福 +4 · 人間関係 +2',null,['local']);
-  add('course','資格・職業講座',43.3,{k:4},'知識 ↑ · 仕事の評価が少し上がる',L=>{L.career+=1;},['learn','work']);
-  [['tech','技術・整備'],['cook','調理・美容'],['care','介護・保育'],['office','事務・パソコン']].forEach(([k,n])=>add('tr_'+k,`職業訓練: ${n}`,11.5,{k:2},'知識 少し↑',L=>{L.trained=n;},['work','learn']));
-  if(L.job&&!L.retired&&!L.job.athlete&&!L.job.coach)add('hunt','転職先を探す',0,{},'来年、仕事の話が来る可能性 ↑',L=>{L.jobHunt=L.age+1;},['work','free']);
+  if(mate)add('tripP','国内旅行(連れ合いと二人で)',26,{j:3,r:2,k:1},'',null,['family','love']);
+  if(lover)add('tripR','国内旅行(恋人と二人で)',26,{j:3,r:2,k:1},'',null,['love']);
+  add('tripF','国内旅行(友人たちと)',17.3,{j:2,r:1,k:1},'',null,['local','free']);
+  add('tripS','国内旅行(一人で)',17.3,{j:2,k:1},'',null,['free']);
+  if(mate)add('abP','海外旅行(連れ合いと二人で)',62.6,{j:4,r:2,k:2},'',null,['family','love']);
+  if(lover)add('abR','海外旅行(恋人と二人で)',62.6,{j:4,r:2,k:2},'',null,['love']);
+  add('abF','海外旅行(友人たちと)',41.8,{j:3,r:1,k:2},'',null,['free','learn']);
+  add('abS','海外旅行(一人で)',41.8,{j:3,k:2},'',null,['free','learn']);
+  add('course','資格・職業講座',43.3,{k:4},'',L=>{L.career+=1;},['learn','work']);
+  [['tech','技術・整備'],['cook','調理・美容'],['care','介護・保育'],['office','事務・パソコン']].forEach(([k,n])=>add('tr_'+k,`職業訓練: ${n}`,11.5,{k:2},'',L=>{L.trained=k;L.trainOfferAt=L.age+1;},['work','learn']));
+  if(!L.pilotUntil&&!L.pilot&&L.age<45)add('pilot','飛行学校(操縦士免許 · 2年ほど)',1583,{k:5},'',L=>{L.pilotUntil=L.age+2;},['work','free']);
+  if(!L.langPrep)add('lang','外国語の授業(移住の準備)',11.5,{k:2},'',L=>{L.langPrep=true;},['learn','free']);
+  if(freeJob(L))add('hunt','転職先を探す',0,{},'',L=>{L.jobHunt=L.age+1;},['work','free']);
+  if(L.home==='family'&&!L.ownHouse&&L.job&&!L.retired)add('leave','実家を出て暮らす',43.3,{j:3},'',L=>{L.home='rent';},['free']);
+  if(L.job&&!L.retired&&!L.job.self&&!L.bizAt)add('biz','起業を検討する',0,{},'',L=>{L.bizAt=L.age+1;},['work','free']);
+  if(L.job&&!L.retired&&!L.dreamAt&&L.age<50)add('dream','やってみたかった仕事に挑戦',0,{},'',L=>{L.dreamAt=L.age+1;},['love','free']);
   if(L.edu!=='univ'&&!L.uniUntil&&L.age<55){
-    add('night','働きながら学ぶ: 夜間大学(4年)',231,{k:3},'学士号 · 収入↑',L=>{L.uniUntil=L.age+4;L.uniOk=true;},['learn','work']);
-    add('corr','働きながら学ぶ: 通信制大学(5年ほど・修了は半分ほど)',43.3,{k:2},'学費が安い · 学士号 · 収入↑',L=>{L.uniUntil=L.age+5;L.uniOk=R()<0.5;},['learn']);
+    [['night_h','夜間大学・人文学(4年)',231,4,1],['night_t','夜間大学・観光・ホテル・調理(4年)',231,4,1],['corr_h','通信制大学・人文学(5年ほど · 学費が安い · 修了は半分ほど)',43.3,5,0.5],['corr_t','通信制大学・観光・ホテル・調理(5年ほど · 学費が安い · 修了は半分ほど)',43.3,5,0.5]]
+      .forEach(u=>add(u[0],u[1],u[2],{k:2},'',L=>{L.uniUntil=L.age+u[3];L.uniOk=R()<u[4];},['learn','work']));
   }
-  add('hobbyL','趣味の道具・レッスンで腕を上げる',14.4,{j:3,k:1},'幸福 +3',null,['love']);
-  add('hobbyN','新しい趣味を探す',5.8,{j:2},'幸福 +2',null,['love','free']);
-  if(!L.pet)add('pet','ペットを迎える',10,{j:3,r:1},'毎年 幸福・人間関係が少し↑ · 世話に毎年約15万円',L=>{L.pet=L.age;},['family','love']);
-  if(!L.bike)add('bike','自転車を買う',2.2,{j:3},'幸福 +3 · 乗って出かければ健康↑',L=>{L.bike=true;},['health','free']);
+  hobbies(L).forEach((h,i)=>add('hob'+i,`${h}の道具・レッスン`,14.4,{j:3,k:1},'',null,['love']));
+  if(hobbies(L).length<3)add('hobbyN','新しい趣味を探す',5.8,{j:2},'',L=>{const c=HOBBY_LIST.filter(x=>!hobbies(L).includes(x));const h=pick(c);L.hobbies.push(h);addLog(L,`新しい趣味に${h}をはじめた。`);},['love','free']);
+  if(!L.pet)add('pet','ペットを迎える',10,{j:3,r:1},'',L=>{L.pet=L.age;},['family','love']);
+  const here=L.loc.label;
+  if(here!=='新潟市')add('mv_niigata','新潟市へ引っ越す',28.8,{j:1},'',L=>moveCity(L,{inPref:true,muni:MI['新潟市中央区'].i,label:'新潟市'}),['local','work']);
+  if(!/東京/.test(here))add('mv_tokyo','東京へ引っ越す',28.8,{j:1,r:-2},'',L=>moveCity(L,{inPref:false,muni:null,label:'東京都'}),['free','work']);
+  if(!L.loc.abroad&&!L.abroadResAt)add('abres','海外で働く道を調べる',5.8,{k:1},'',L=>{L.abroadResAt=L.age+1;},['free','learn']);
+  add('donate','寄付する',14.4,{j:4,r:2},'',null,['local']);
+  if(hasCar(L))add('car','車を売る',-143,{},'',L=>{L.carSold=true;if(['中山間','豪雪地帯','町村部','離島'].includes(regionOf(muniOf(L))))fx(L,{j:-2});},['money']);
+  if(!L.bike)add('bike','自転車を買う',2.2,{j:3},'',L=>{L.bike=true;},['health','free']);
+  if(L.parents.some(p=>p.alive))add('remit','両親への仕送り・医療費',24.5,{r:5},'',L=>{L.remitYear=L.age+1;},['family']);
   return it;
+}
+function moveCity(L,to){
+  setLoc(L,to);addLog(L,`${to.label}に引っ越した。`,'home',true);turn(L,`${to.label}へ引っ越し`);
+  if(freeJob(L)){const co=newCompany(L);addLog(L,`引っ越し先で、${co.name}に勤めはじめた。`,'work');}
 }
 function spendScene(L,used){
   used=used||[];
@@ -1525,7 +1553,7 @@ function spendScene(L,used){
 function moneyYear(L,Q){
   const m=L.mset;const a=L.age;
   if(L.uniUntil===a){if(L.uniOk){L.edu='univ';addLog(L,'働きながら学び、大学を卒業して学士号を取った。','learn',true);turn(L,'働きながら大学を卒業');mark(L,1,'学士号');}else addLog(L,'通信制大学は、修了まで続けられなかった。','learn');L.uniUntil=null;}
-  if(L.jobHunt===a){L.jobHunt=null;if(L.job&&!L.retired&&!L.unemp&&!L.job.athlete&&!L.job.coach)Q.push(transferScene(L));}
+  if(L.jobHunt===a){L.jobHunt=null;if(L.job&&!L.retired&&!L.unemp&&!L.job.athlete&&!L.job.coach&&!L.job.self)Q.push(transferScene(L));}
   if(L.pet){fx(L,{j:1,r:1});if(a-L.pet>=14){L.pet=null;addLog(L,'長く一緒に暮らしたペットを見送った。','family',true);fx(L,{j:-4});}}
   if(L.bike&&a<75)fx(L,{h:0.3});
   if(!m)return;
@@ -1539,19 +1567,61 @@ function moneyYear(L,Q){
 
 /* ---------- お金の画面(まとめて選ぶ) ---------- */
 const SPEND_GROUPS=[
-  ['meal','家族・友人と外食・プレゼント','人間関係 +4 · 幸福 +2',['meal']],
-  ['treat','友人たちにごちそうする','人間関係 +5',['treat']],
-  ['trip','国内旅行','幸福 +2 · 知識 少し↑ · 一緒に行く人を選べます',['tripP','tripF','tripS']],
-  ['abroad','海外旅行','幸福 +3 · 知識 ↑ · 一緒に行く人を選べます',['abP','abF']],
-  ['learn','資格・職業訓練','講座で知識を積むか、一つの分野の職業訓練を受けます',['course','tr_tech','tr_cook','tr_care','tr_office']],
+  ['partner',L=>`${L.partner?L.partner.name:''}さんとのこれから`,'付き合った時間と関係しだいです',['propose','breakup']],
+  ['meal','家族・友人と外食・プレゼント','人間関係 +4 · 幸福 +2 · 1年後にまた選べます',['meal']],
+  ['trip','国内旅行','幸福 +2 · 知識 少し↑ · 一緒に行く人を選べます',['tripP','tripR','tripF','tripS']],
+  ['learn','資格・職業訓練','講座で知識を積むか、一つの分野の職業訓練を受けます · 訓練を終えると、その分野の仕事の誘いが来やすくなります',['course','tr_tech','tr_cook','tr_care','tr_office','pilot','lang']],
   ['hunt','転職先を探す','履歴書を出し、知り合いに聞いて回ります · 来年、仕事の話が来る可能性 ↑',['hunt']],
-  ['uni','働きながら大学で学ぶ','学士号 · 収入↑',['night','corr']],
-  ['remit','両親への仕送り・医療費','人間関係 +5 · 両親の健康 ↑',['remit']],
-  ['hobby','趣味・ペット','道具とレッスンで腕を上げるか、新しい趣味を探します · ペットは毎年 幸福・人間関係が少し↑ · 世話の費用がかかります',['hobbyL','hobbyN','pet']],
+  ['leave','実家を出て暮らす','保証金と家財道具 · その後の生活費は自分でまかないます',['leave']],
+  ['treat','友人たちにごちそうする','人間関係 +5',['treat']],
   ['bike','自転車','幸福 +3 · 乗って出かければ健康 ↑',['bike']],
-  ['donate','寄付する','幸福 +4 · 人間関係 +2',['donate']]
+  ['remit','両親への仕送り・医療費','人間関係 +5 · 両親の健康 ↑',['remit']],
+  ['abroad','海外旅行','幸福 +3 · 知識 少し↑ · 一緒に行く人を選べます',['abP','abR','abF','abS']],
+  ['biz','起業を検討する','やってみたい仕事とかかるお金を検討します · 来年、自分の事業を始めるかを決めるカードが出てきます',['biz']],
+  ['dream','やってみたかった仕事に挑戦','やってみたかった仕事を調べます · 来年、三つの仕事のうち一つに挑戦するカードが出てきます(ほとんどは狭き門です)',['dream']],
+  ['uni','働きながら大学で学ぶ','学士号 · 収入↑',['night_h','night_t','corr_h','corr_t']],
+  ['hobby','趣味・ペット','道具とレッスンで腕を上げるか、新しい趣味を探します · 趣味は三つまで · ペットは毎年 幸福・人間関係が少し↑ · 世話の費用がかかります',['hob0','hob1','hob2','hobbyN','pet']],
+  ['move','引っ越し・移住','別の都市に移るか、海外で働く道を調べます · 勤めている人は引っ越し先で仕事も変わります',['mv_niigata','mv_tokyo','abres']],
+  ['donate','寄付する','幸福 +4 · 人間関係 +2',['donate']],
+  ['car','車を売る','中古で売ったお金が手元に残ります · 修理代がかかりません · 車がないと事故は減りますが、雪国の暮らしは少し不便になります',['car']]
 ];
-const CHIP_NAME={tripP:'連れ合いと二人で',tripF:'友人たちと',tripS:'一人で',abP:'連れ合いと二人で',abF:'友人たちと',course:'資格・職業講座',tr_tech:'職業訓練:技術・整備',tr_cook:'職業訓練:調理・美容',tr_care:'職業訓練:介護・保育',tr_office:'職業訓練:事務・パソコン',night:'夜間大学(4年)',corr:'通信制大学(5年ほど・修了は半分ほど)',hobbyL:'趣味の道具・レッスン',hobbyN:'新しい趣味を探す',pet:'ペットを迎える'};
+const CHIP_NAME={propose:'結婚の話を切り出す',breakup:'別れようと言う',tripP:'連れ合いと二人で',tripR:'恋人と二人で',tripF:'友人たちと',tripS:'一人で',abP:'連れ合いと二人で',abR:'恋人と二人で',abF:'友人たちと',abS:'一人で',course:'資格・職業講座',tr_tech:'職業訓練:技術・整備',tr_cook:'職業訓練:調理・美容',tr_care:'職業訓練:介護・保育',tr_office:'職業訓練:事務・パソコン',pilot:'飛行学校(操縦士免許 · 2年ほど)',lang:'外国語の授業(移住の準備)',night_h:'夜間大学・人文学(4年)',night_t:'夜間大学・観光・ホテル・調理(4年)',corr_h:'通信制大学・人文学(5年ほど · 学費が安い · 修了は半分ほど)',corr_t:'通信制大学・観光・ホテル・調理(5年ほど · 学費が安い · 修了は半分ほど)',hobbyN:'新しい趣味を探す',pet:'ペットを迎える',mv_niigata:'新潟市へ引っ越す',mv_tokyo:'東京へ引っ越す',abres:'海外で働く道を調べる'};
+/* ---------- 翌年に出てくるカード(ゲーム上の仮定) ---------- */
+const DREAMS=[['声優',0.08,400],['漫画家',0.06,500],['料理人として自分の店を開く',0.2,450],['ミュージシャン',0.05,350],['写真家',0.12,380],['ゲームクリエイター',0.15,550],['小説家',0.05,300],['俳優',0.05,400],['プロのダンサー',0.08,320],['陶芸家',0.15,300]];
+function setOwnJob(L,size,company,label,salary,extra){L.job={size,inPref:L.loc.inPref,company,label,salary,...(extra||{})};L.unemp=false;L.workStart=L.workStart??L.age;setRole(L,'work');}
+function moneyYear2(L,Q){
+  const a=L.age;
+  if(L.job&&L.job.size==='pilot')L.job.salary=Math.round(L.job.salary*1.03);
+  if(L.job&&L.job.self&&L.job.size==='biz'){
+    const b=L.biz||{};
+    if(b.ok)L.job.salary=Math.max(200,Math.round(L.job.salary*(1.05+gauss()*0.15)));
+    else if(a>=b.closeAt){addLog(L,'自分の事業は軌道に乗らず、店をたたんだ。','work',true);turn(L,'事業をたたんだ');L.biz=null;const co=newCompany(L);L.job.self=false;addLog(L,`${co.name}に勤めはじめた。`,'work');}
+  }
+  if(L.job&&L.job.self&&a>=70){retire(L);addLog(L,'長く続けた仕事を引退した。','work',true);}
+  if(L.pilotUntil===a){L.pilotUntil=null;L.pilot=true;addLog(L,'飛行学校を修了し、操縦士の免許を取った。','learn',true);turn(L,'操縦士の免許を取得');
+    Q.push(scene({title:`${a}歳 操縦士の仕事`,body:'操縦士の免許を取りました。航空会社から採用の話が来ています。',stats:['aLife2'],opts:[
+      ...[['日本航空','東京都',1200],['全日本空輸','東京都',1200],['トキエア','新潟市',700]].map(c=>opt(`${c[0]}の操縦士になる(${c[1]})`,L=>{if(c[1]==='新潟市')setLoc(L,{inPref:true,muni:MI['新潟市中央区'].i,label:'新潟市'});else setLoc(L,{inPref:false,muni:null,label:c[1]});setOwnJob(L,'pilot',c[0],`${c[0]} 操縦士`,c[2]);turn(L,`${c[0]}の操縦士に`);mark(L,1,'操縦士');return {text:`${c[0]}の操縦士になった。`,hot:true};},['work','free'],`年収 約${yen(c[2])}(仮定)`)),
+      opt('いまの仕事を続ける',L=>({text:'免許は取ったが、いまの仕事を続けることにした。'}),['family'])]}));}
+  if(L.trainOfferAt===a){L.trainOfferAt=null;if(freeJob(L)){
+    const city=muniOf(L).city;const T={tech:[['日本精機','l'],['コロナ','l'],['ツインバード','s']],office:[['第四北越銀行','l'],['大光銀行','s'],['新潟運輸','s']],cook:[[`${city}の飲食店`,'s'],[`${city}の美容室`,'s']],care:[[`${city}の介護施設`,'s'],[`${city}の保育園`,'s']]}[L.trained]||[];
+    if(T.length)Q.push(scene({title:`${a}歳 職業訓練のあと`,body:'職業訓練を終え、その分野の仕事の誘いが来ました。',stats:['aLife2'],opts:[
+      ...T.map(t=>opt(`${t[0]}で働く`,L=>{L.job={...makeJob(t[1],L.loc.inPref,{name:t[0]}),rank:0};turn(L,`${t[0]}へ転職`);return {text:`${t[0]}で働きはじめた。`,hot:true};},['work'],`年収 約${yen(estWage(L,L.edu,t[1]))}`)),
+      opt('いまの仕事を続ける',L=>({text:'いまの仕事を続けることにした。'}),['family'])]}));}}
+  if(L.bizAt===a){L.bizAt=null;if(L.job&&!L.retired){
+    Q.push(scene({title:`${a}歳 自分の事業`,body:'やってみたい仕事と、かかるお金を調べ終えました。自分の事業を始めますか。うまくいくかどうかは、始めてみないとわかりません。',stats:['aLife2'],opts:[
+      opt('事業を始める(準備に約300万円)',L=>{L.savings-=300;const ok=R()<0.4;L.biz={ok,closeAt:L.age+ri(2,4)};setOwnJob(L,'biz','自分の事業','自営業(自分の事業)',ok?ri(400,700):ri(100,200),{self:true});turn(L,'自分の事業を始めた');mark(L,1,'起業');fx(L,{j:4,h:-2});return {text:'会社をやめ、自分の事業を始めた。',hot:true};},['free','work'],'仕事をやめて始める'),
+      opt('今回は見送る',L=>({text:'起業は見送った。'}),['family','money'])]}));}}
+  if(L.dreamAt===a){L.dreamAt=null;
+    const d=DREAMS.slice().sort(()=>R()-.5).slice(0,3);
+    Q.push(scene({title:`${a}歳 やってみたかった仕事`,body:'やってみたかった仕事を調べました。三つのうち一つに挑戦できます。ほとんどは狭き門です。',stats:['aLife2'],opts:[
+      ...d.map(x=>opt(`${x[0]}に挑戦する`,L=>{if(R()<x[1]){setOwnJob(L,'dream',x[0],x[0],x[2],{self:true});turn(L,`${x[0]}になった`);mark(L,1,x[0]);fx(L,{j:8});return {text:`挑戦が実り、${x[0]}として働きはじめた。`,hot:true};}fx(L,{j:-2,k:2});turn(L,`${x[0]}に挑戦した`);return {text:`${x[0]}に挑戦したが、狭き門だった。`};},['love','free'],`なれる見込み 約${Math.round(x[1]*100)}%`)),
+      opt('今回は挑戦しない',L=>({text:'今回は挑戦しないことにした。'}),['family','money'])]}));}
+  if(L.abroadResAt===a){L.abroadResAt=null;if(L.job&&!L.retired&&!L.job.athlete&&!L.job.coach&&!L.job.self){
+    const cos=[0,1].map(()=>pickCompany(L,'x',false));
+    Q.push(scene({title:`${a}歳 海外で働く道`,body:'海外で働く方法を調べ、いくつかの会社から話が来ました。',stats:['aLife2'],opts:[
+      ...cos.map(c=>opt(`${c.name}(${c.place})で働く`,L=>{setLoc(L,{inPref:false,abroad:true,muni:null,label:c.place});L.job={...makeJob('x',false,c),rank:0};fx(L,{r:-4,k:3});turn(L,`${c.place}の${c.name}へ`);return {text:`${c.place}に移り、${c.name}で働きはじめた。`,hot:true};},['free','work'],`年収 約${yen(estWage(L,L.edu,'x'))}`)),
+      opt('いまの暮らしを続ける',L=>({text:'海外には行かず、いまの暮らしを続けることにした。'}),['family','local'])]}));}}
+}
 let MTAB='spend';
 function openMoney(tab){if(!G||G.ended)return;mset(G.L);G.L.stats.add('aLife');G.panel=true;MTAB=tab||MTAB;renderMoney();$('mpanel').hidden=false;document.body.style.overflow='hidden';}
 function closeMoney(){G.panel=false;$('mpanel').hidden=true;document.body.style.overflow='';renderPlay();}
@@ -1559,16 +1629,17 @@ function buyItem(id){
   const L=G.L;const it=spendItems(L).find(x=>x.id===id);if(!it)return;
   L.spentAt=L.spentAt||{};if(L.spentAt[id]===L.age||(it.cost>0&&L.savings<it.cost))return;
   L.savings-=it.cost;fx(L,it.eff);if(it.fn)it.fn(L);L.spentAt[id]=L.age;
-  addLog(L,`${it.label}${it.cost?`(約${yen(it.cost)})`:''}。`,'');turn(L,it.label);
+  addLog(L,`${it.label}${it.cost>0?`(約${yen(it.cost)})`:it.cost<0?`(約${yen(-it.cost)}が手元に)`:''}。`,'');turn(L,it.label);
   MSG=`「${it.label}」を選びました。`;renderMoney();
 }
 let MSG='';
+const priceLabel=x=>['propose','breakup'].includes(x.id)?'':x.cost<0?'+'+yen(-x.cost):x.cost?yen(x.cost):'無料';
 function renderMoney(){
   const L=G.L,m=mset(L);const el=$('mpanel');
   const items=Object.fromEntries(spendItems(L).map(x=>[x.id,x]));
   const spent=L.spentAt||{};
   const chip=(id,label)=>{const x=items[id];if(!x)return '';const dis=spent[id]===L.age||(x.cost>0&&L.savings<x.cost);
-    return `<button type="button" class="mchip" data-buy="${id}" ${dis?'disabled':''}>${esc(label)} <span>${spent[id]===L.age?'今年は済み':x.cost?yen(x.cost):'無料'}</span></button>`;};
+    return `<button type="button" class="mchip" data-buy="${id}" ${dis?'disabled':''}>${esc(label)} <span>${spent[id]===L.age?'今年は済み':priceLabel(x)}</span></button>`;};
   let body='';
   if(MTAB==='spend'){
     body+='<div class="mhead">今やっておきたいこと</div>';
@@ -1576,8 +1647,8 @@ function renderMoney(){
       const ids=g[3].filter(id=>items[id]);if(!ids.length)continue;
       if(ids.length===1&&!CHIP_NAME[ids[0]]){
         const x=items[ids[0]];const dis=spent[ids[0]]===L.age||(x.cost>0&&L.savings<x.cost);
-        body+=`<div class="mcard"><div class="mrow"><div><b>${esc(g[1])}</b><p>${esc(g[2])}</p></div><button type="button" class="mprice" data-buy="${ids[0]}" ${dis?'disabled':''}>${spent[ids[0]]===L.age?'今年は済み':x.cost?yen(x.cost):'無料'}<small>${x.cost?'日本の物価で':''}</small></button></div></div>`;
-      }else body+=`<div class="mcard"><b>${esc(g[1])}</b><p>${esc(g[2])}</p><div class="mchips">${ids.map(id=>chip(id,CHIP_NAME[id]||items[id].label)).join('')}</div></div>`;
+        body+=`<div class="mcard"><div class="mrow"><div><b>${esc(typeof g[1]==='function'?g[1](L):g[1])}</b><p>${esc(g[2])}</p></div><button type="button" class="mprice" data-buy="${ids[0]}" ${dis?'disabled':''}>${spent[ids[0]]===L.age?'今年は済み':priceLabel(x)}<small>${x.cost?'日本の物価で':''}</small></button></div></div>`;
+      }else body+=`<div class="mcard"><b>${esc(typeof g[1]==='function'?g[1](L):g[1])}</b><p>${esc(g[2])}</p><div class="mchips">${ids.map(id=>chip(id,CHIP_NAME[id]||items[id].label)).join('')}</div></div>`;
     }
     body+=`<div class="mhead">自動で続ける</div><div class="mcard"><p>オンにしておくと、時期が来るたびに自動で行います。お金がかかるものは、貯金が費用の3倍を超えるときだけ行います。外食・旅行・レッスン・寄付は、使ったあとも一般的な人の1年分の収入(約400万円)が残るときだけ行います。オンにするほど、貯まるお金は減ります。</p><div class="mchips">${Object.keys(AUTO).map(k=>{const a=AUTO[k];const on=!!m.auto[k];return `<button type="button" class="mchip ${on?'on':''}" data-auto="${k}" aria-pressed="${on}">${esc(a[0])} <span>${a[1]===1?'毎年':a[1]+'年ごと'} · ${yen(a[2])}</span></button>`;}).join('')}</div></div>`;
   }else{
@@ -1781,11 +1852,11 @@ function loveScene(L){
   L.stats.add('aMarry');L.stats.add('tfr');
   return scene({title:`${L.age}歳 大切な人`,body:'いっしょにいると落ち着く人がいます。これからのことを考えます。',stats:['aMarry','tfr'],opts:[
     opt('この人と結婚する',L=>{marry(L);return {text:'結婚した。',hot:true};},['family','local'],'',1.6),
-    opt('いまは、このままの関係で',L=>{L.maybeMarry=true;fx(L,{j:1});turn(L,'結婚は急がないことにした');return {text:'結婚は、いまは決めないことにした。'};},['free','work']),
+    opt('いまは、このままの関係で',L=>{L.maybeMarry=true;L.partner={name:pick(GIVEN[L.sex==='m'?'f':'m']),since:L.age};fx(L,{j:1});turn(L,'結婚は急がないことにした');return {text:'結婚は、いまは決めないことにした。'};},['free','work']),
     opt('ひとりの時間を大切にする',L=>{L.maybeMarry=R()<.35;fx(L,{j:1,r:-1});turn(L,'ひとりの暮らしを選んだ');return {text:'ひとりの暮らしを続けることにした。'};},['free','love'],'',0.7)
   ]});
 }
-function marry(L){L.married=true;L.marriedAt=L.age;L.spouseAge=L.age+ri(-3,4)*(L.sex==='m'?-1:1);L.spouseAlive=true;fx(L,{j:6,r:4});turn(L,'結婚');mark(L,2,'結婚');}
+function marry(L){L.partner=null;L.married=true;L.marriedAt=L.age;L.spouseAge=L.age+ri(-3,4)*(L.sex==='m'?-1:1);L.spouseAlive=true;fx(L,{j:6,r:4});turn(L,'結婚');mark(L,2,'結婚');}
 function transferScene(L){
   return scene({title:`${L.age}歳 仕事の転機`,body:'会社から異動の話がありました。ほかの会社からも声がかかっています。別の土地へ移る場合は、候補の中から選べます。',stats:['migr'],opts:[
     opt('別の土地へ移る(候補から選ぶ)',()=>({next:[moveScene(L)]}),['work','free'],'転勤・転職',1),
@@ -1898,12 +1969,12 @@ function stepYear(){
   if(L.school&&L.school.type!=='hs'&&L.school.end===a)Q.push(gradScene(L));
   const working=L.job&&!L.retired;
   if(a===L.sched.love&&!L.married)Q.push(loveScene(L));
-  if(a===L.sched.transfer&&working&&!L.unemp&&!L.job.athlete&&!L.job.coach)Q.push(transferScene(L));
+  if(a===L.sched.transfer&&working&&!L.unemp&&!L.job.athlete&&!L.job.coach&&!L.job.self)Q.push(transferScene(L));
   if(working&&L.unemp&&a>L.unempAt){L.unemp=false;const co=newCompany(L);addLog(L,`${co.name}で新しく働きはじめた。`,'work');turn(L,`${co.name}で再就職`);}
   if(a>=L.sched.house&&a<=38&&!L.ownHouse&&!L.houseAsked&&working){L.houseAsked=true;Q.push(houseScene(L));}
   if(a>=L.sched.care&&a<=62&&!L.careAsked){const p=L.parents.find(p=>p.alive&&p.age>=75);if(p){L.careAsked=true;Q.push(careScene(L,p));}}
-  if(working&&!L.retired&&!L.job.athlete&&!L.job.coach&&a===teinenOf(L))Q.push(retireScene(L));
-  if(L.job&&!L.job.athlete&&!L.job.coach&&!L.retired&&a>teinenOf(L)){retire(L);}
+  if(working&&!L.retired&&!L.job.athlete&&!L.job.coach&&!L.job.self&&a===teinenOf(L))Q.push(retireScene(L));
+  if(L.job&&!L.job.athlete&&!L.job.coach&&!L.job.self&&!L.retired&&a>teinenOf(L)){retire(L);}
   if(L.reemp===a)addLog(L,'定年後の仕事を終えた。','work');
   if(L.age>=L.sched.snow&&!L.snowAsked&&L.loc.inPref&&muniOf(L).snow>=2&&a<=85){L.snowAsked=true;L.stats.add('snowex');Q.push(snowScene(L));}
   if(a===75)Q.push(licenseScene(L));
@@ -1911,6 +1982,7 @@ function stepYear(){
   if(L.job&&L.job.athlete&&R()<natP(L))Q.push(natScene(L));
   if(L.job&&L.job.coach&&!L.retired)coachYear(L,Q);
   moneyYear(L,Q);
+  moneyYear2(L,Q);
   if(canPromote(L)){const nx=(L.job.rank||0)+1;if(nx<RANKS.length&&a>=RANK_AGE[nx]&&(!L.promoAskedAt||a-L.promoAskedAt>=3)&&R()<RANK_P[nx]*(1+0.04*L.career)*(0.6+L.m.k/150+L.m.r/150))Q.push(promoScene(L));}
   if(L.school&&L.school.type==='univ'&&!L.school.abroad&&a===L.school.end-2&&!L.studyAsked&&abroadOK(L,'study')){L.studyAsked=true;Q.push(studyScene(L));}
   // 出来事
@@ -1954,7 +2026,7 @@ function randomEvents(L){
     if(R()<0.75){addLog(L,`${ILL[L.illness.type]}の治療がひと区切りついた。`,'health');L.illness=null;}else L.illness.until=a+1;
   }
   // 失業
-  if(L.job&&!L.job.athlete&&!L.job.coach&&!L.retired&&!L.unemp&&a>=20&&a<=59){
+  if(L.job&&!L.job.athlete&&!L.job.coach&&!L.job.self&&!L.retired&&!L.unemp&&a>=20&&a<=59){
     const f=focusDef(L);const p=0.025*(f&&f[0]==='work'?0.7:1);
     if(R()<p){L.unemp=true;L.unempAt=a;fx(L,{j:-6});addLog(L,'勤め先を離れることになり、仕事を探しはじめた。','work',true);mark(L,1,'失業');turn(L,'失業');L.stats.add('aUnemp');}
   }
@@ -1971,7 +2043,7 @@ function randomEvents(L){
   // 子どもの成長
   for(const k of L.kids){if(!k.alive)continue;const ka=a-k.born;if(ka===6)addLog(L,'子どもが小学校に入った。','family');if(ka===18)addLog(L,'子どもが高校を卒業した。','family');}
   // 交通事故
-  const accP=0.004*(a>=75&&L.license?2.2:1);
+  const accP=0.004*(a>=75&&L.license?2.2:1)*(L.carSold?0.6:1);
   if(R()<accP){fx(L,{h:-8,j:-3});addLog(L,a>=75&&L.license?'運転中に事故を起こし、けがをした。':'交通事故にあい、けがをした。','health',true);mark(L,3,'事故');}
   // ひとことの出来事
   if(R()<0.42)minorEvent(L);
