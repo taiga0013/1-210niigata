@@ -209,6 +209,31 @@ svg{display:block;width:100%;height:auto}
 .ach b{display:block;font-family:var(--f-head);font-size:15px}
 .ach.off{opacity:.45}
 .ach.on{border-color:var(--accent)}
+.mpanel{position:fixed;inset:0;z-index:50;background:var(--bg);overflow-y:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}
+.mbar{position:sticky;top:0;z-index:1;background:var(--bg);display:flex;justify-content:space-between;align-items:center;gap:12px;max-width:760px;margin:0 auto;padding-top:calc(12px + env(safe-area-inset-top,0px));padding-bottom:12px;border-bottom:1px solid var(--line)}
+.mtabs{display:flex;align-items:center;gap:6px;color:var(--muted)}
+.mtabs button,.mclose{background:none;border:0;cursor:pointer;font-size:15px;color:var(--muted);padding:4px 6px}
+.mtabs button[aria-pressed="true"]{color:var(--accent);font-weight:700}
+.mclose:hover,.mtabs button:hover{color:var(--fg)}
+.mbody{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:12px;padding-top:16px}
+.msave{font-size:34px;font-weight:800}
+.msave small{font-family:var(--f-body);font-size:13px;font-weight:400;color:var(--accent);margin-left:8px}
+.mlead{color:var(--muted)}
+.mmsg{background:var(--sea-soft);border-radius:8px;padding:8px 12px;font-size:14px}
+.mhead{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.06em;margin-top:6px}
+.mcard{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.mcard b{font-size:16px}
+.mcard p{font-size:13px;color:var(--muted);line-height:1.6}
+.mrow{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.mrow>div{min-width:0;display:flex;flex-direction:column;gap:4px}
+.mprice{background:none;border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:700;font-size:16px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mprice small{display:block;font-size:11px;font-weight:400;color:var(--muted)}
+.mchips{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.mchip{border:1px solid var(--line);border-radius:999px;background:none;padding:7px 14px;cursor:pointer;font-size:14px;text-align:left;max-width:100%}
+.mchip span{color:var(--muted);font-size:12.5px;margin-left:4px;font-variant-numeric:tabular-nums}
+.mchip:hover:not(:disabled),.mprice:hover:not(:disabled){border-color:var(--fg)}
+.mchip.on{background:var(--sea-soft);border-color:var(--sea)}
+.mchip:disabled,.mprice:disabled{opacity:.45;cursor:default}
 .copybox{width:100%;min-height:110px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);font:inherit;font-size:13px;padding:10px}
 .section-title{font-size:19px;margin-bottom:10px}
 table.rec{border-collapse:collapse;width:100%;font-size:13.5px}
@@ -318,6 +343,7 @@ table.rec th{color:var(--muted);font-weight:500;font-size:12px}
   </section>
 
   <!-- END -->
+  <div class="mpanel" id="mpanel" hidden role="dialog" aria-label="お金を使う"></div>
   <section class="screen" id="s-end" hidden></section>
 
   <!-- RECORDS -->
@@ -1511,6 +1537,69 @@ function moneyYear(L,Q){
   if(done.length)addLog(L,`いつものように: ${done.join('・')}。`);
 }
 
+/* ---------- お金の画面(まとめて選ぶ) ---------- */
+const SPEND_GROUPS=[
+  ['meal','家族・友人と外食・プレゼント','人間関係 +4 · 幸福 +2',['meal']],
+  ['treat','友人たちにごちそうする','人間関係 +5',['treat']],
+  ['trip','国内旅行','幸福 +2 · 知識 少し↑ · 一緒に行く人を選べます',['tripP','tripF','tripS']],
+  ['abroad','海外旅行','幸福 +3 · 知識 ↑ · 一緒に行く人を選べます',['abP','abF']],
+  ['learn','資格・職業訓練','講座で知識を積むか、一つの分野の職業訓練を受けます',['course','tr_tech','tr_cook','tr_care','tr_office']],
+  ['hunt','転職先を探す','履歴書を出し、知り合いに聞いて回ります · 来年、仕事の話が来る可能性 ↑',['hunt']],
+  ['uni','働きながら大学で学ぶ','学士号 · 収入↑',['night','corr']],
+  ['remit','両親への仕送り・医療費','人間関係 +5 · 両親の健康 ↑',['remit']],
+  ['hobby','趣味・ペット','道具とレッスンで腕を上げるか、新しい趣味を探します · ペットは毎年 幸福・人間関係が少し↑ · 世話の費用がかかります',['hobbyL','hobbyN','pet']],
+  ['bike','自転車','幸福 +3 · 乗って出かければ健康 ↑',['bike']],
+  ['donate','寄付する','幸福 +4 · 人間関係 +2',['donate']]
+];
+const CHIP_NAME={tripP:'連れ合いと二人で',tripF:'友人たちと',tripS:'一人で',abP:'連れ合いと二人で',abF:'友人たちと',course:'資格・職業講座',tr_tech:'職業訓練:技術・整備',tr_cook:'職業訓練:調理・美容',tr_care:'職業訓練:介護・保育',tr_office:'職業訓練:事務・パソコン',night:'夜間大学(4年)',corr:'通信制大学(5年ほど・修了は半分ほど)',hobbyL:'趣味の道具・レッスン',hobbyN:'新しい趣味を探す',pet:'ペットを迎える'};
+let MTAB='spend';
+function openMoney(tab){if(!G||G.ended)return;mset(G.L);G.L.stats.add('aLife');G.panel=true;MTAB=tab||MTAB;renderMoney();$('mpanel').hidden=false;document.body.style.overflow='hidden';}
+function closeMoney(){G.panel=false;$('mpanel').hidden=true;document.body.style.overflow='';renderPlay();}
+function buyItem(id){
+  const L=G.L;const it=spendItems(L).find(x=>x.id===id);if(!it)return;
+  L.spentAt=L.spentAt||{};if(L.spentAt[id]===L.age||(it.cost>0&&L.savings<it.cost))return;
+  L.savings-=it.cost;fx(L,it.eff);if(it.fn)it.fn(L);L.spentAt[id]=L.age;
+  addLog(L,`${it.label}${it.cost?`(約${yen(it.cost)})`:''}。`,'');turn(L,it.label);
+  MSG=`「${it.label}」を選びました。`;renderMoney();
+}
+let MSG='';
+function renderMoney(){
+  const L=G.L,m=mset(L);const el=$('mpanel');
+  const items=Object.fromEntries(spendItems(L).map(x=>[x.id,x]));
+  const spent=L.spentAt||{};
+  const chip=(id,label)=>{const x=items[id];if(!x)return '';const dis=spent[id]===L.age||(x.cost>0&&L.savings<x.cost);
+    return `<button type="button" class="mchip" data-buy="${id}" ${dis?'disabled':''}>${esc(label)} <span>${spent[id]===L.age?'今年は済み':x.cost?yen(x.cost):'無料'}</span></button>`;};
+  let body='';
+  if(MTAB==='spend'){
+    body+='<div class="mhead">今やっておきたいこと</div>';
+    for(const g of SPEND_GROUPS){
+      const ids=g[3].filter(id=>items[id]);if(!ids.length)continue;
+      if(ids.length===1&&!CHIP_NAME[ids[0]]){
+        const x=items[ids[0]];const dis=spent[ids[0]]===L.age||(x.cost>0&&L.savings<x.cost);
+        body+=`<div class="mcard"><div class="mrow"><div><b>${esc(g[1])}</b><p>${esc(g[2])}</p></div><button type="button" class="mprice" data-buy="${ids[0]}" ${dis?'disabled':''}>${spent[ids[0]]===L.age?'今年は済み':x.cost?yen(x.cost):'無料'}<small>${x.cost?'日本の物価で':''}</small></button></div></div>`;
+      }else body+=`<div class="mcard"><b>${esc(g[1])}</b><p>${esc(g[2])}</p><div class="mchips">${ids.map(id=>chip(id,CHIP_NAME[id]||items[id].label)).join('')}</div></div>`;
+    }
+    body+=`<div class="mhead">自動で続ける</div><div class="mcard"><p>オンにしておくと、時期が来るたびに自動で行います。お金がかかるものは、貯金が費用の3倍を超えるときだけ行います。外食・旅行・レッスン・寄付は、使ったあとも一般的な人の1年分の収入(約400万円)が残るときだけ行います。オンにするほど、貯まるお金は減ります。</p><div class="mchips">${Object.keys(AUTO).map(k=>{const a=AUTO[k];const on=!!m.auto[k];return `<button type="button" class="mchip ${on?'on':''}" data-auto="${k}" aria-pressed="${on}">${esc(a[0])} <span>${a[1]===1?'毎年':a[1]+'年ごと'} · ${yen(a[2])}</span></button>`;}).join('')}</div></div>`;
+  }else{
+    const radio=(key,obj,label,desc,noteFn)=>`<div class="mcard"><b>${label}</b>${desc?`<p>${desc}</p>`:''}<div class="mchips">${Object.keys(obj).map(k=>`<button type="button" class="mchip ${m[key]===k?'on':''}" data-set="${key}:${k}" aria-pressed="${m[key]===k}">${esc(obj[k][0])} <span>${noteFn(k)}</span></button>`).join('')}</div></div>`;
+    body+='<div class="mhead">暮らし方</div>';
+    body+=radio('inv',INVEST,'余裕資金の運用','貯金をどこに預けるかです。値動きが大きいものほど、増える年も減る年もあります。',k=>INVEST[k][3]);
+    body+=radio('kankon',KANKON,'冠婚葬祭費','友人の結婚式や親戚の葬儀で包むお金です。少なくすればお金は節約できますが、関係が少し疎遠になることもあります。',k=>`年 ${yen(KANKON[k][1])}`);
+    body+=radio('insur',INSUR,'保険','しっかり入ると毎年保険料がかかりますが、病院代の自己負担が大きく減り、70歳前に亡くなれば家族に保険金が出ます。たいていは払った保険料のほうが戻ってくるお金より多くなります。',k=>INSUR[k][1]?`年 ${yen(INSUR[k][1])}`:'ほとんどかからない');
+    body+=radio('diet',DIET,'食生活','食事に気を配ると買い物に少しお金がかかりますが、高血圧や糖尿病のような病気になりにくくなります。外食や出前は手軽ですが、お金がかかり、病気も少しなりやすくなります。',k=>DIET[k][1]?`年 ${yen(DIET[k][1])}`:'ふつう');
+  }
+  el.innerHTML=`<div class="mbar"><div class="mtabs"><button type="button" data-tab="spend" aria-pressed="${MTAB==='spend'}">お金を使う</button><span>·</span><button type="button" data-tab="life" aria-pressed="${MTAB==='life'}">投資・暮らし方</button></div><button type="button" class="mclose" id="m-close">閉じる</button></div>
+   <div class="mbody"><h2 class="msave">貯金 ${yen(Math.max(0,L.savings))}${L.savings<0?`<small>(借りたお金が ${yen(-L.savings)} 多い)</small>`:''}</h2>
+   <p class="mlead">年収は${yen(L.income)}です。お金の使い方で、幸福・人間関係・健康・将来が変わります。選んでいるあいだ、時間は止まっています。</p>
+   ${MSG?`<p class="mmsg" role="status">${esc(MSG)}</p>`:''}${body}${statHTML(['aLife'])}</div>`;
+  MSG='';
+  el.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{MTAB=b.dataset.tab;renderMoney();el.scrollTop=0;});
+  el.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>buyItem(b.dataset.buy));
+  el.querySelectorAll('[data-auto]').forEach(b=>b.onclick=()=>{const k=b.dataset.auto;if(m.auto[k])delete m.auto[k];else m.auto[k]=L.age;renderMoney();});
+  el.querySelectorAll('[data-set]').forEach(b=>b.onclick=()=>{const [k,v]=b.dataset.set.split(':');m[k]=v;MSG='暮らし方を変えました。';renderMoney();});
+  $('m-close').onclick=closeMoney;
+}
+
 function judgeUni(L,u,p){
   if(R()<p){
     L.school={type:'univ',name:u.name,end:L.age+4,inPref:u.inPref,city:u.city||u.muni,abroad:!!u.abroad};
@@ -1796,7 +1885,7 @@ function stepYear(){
   // 場面
   const Q=G.queue;
   if(MILE[a])Q.push(mileScene(a));
-  if(a===30||a===40)Q.push(moneyIntro(L));
+  if(a===30||a===40){if(HEADLESS||G.auto)Q.push(moneyIntro(L));else G.openPanel=true;}
   if(a===7)Q.push(likeScene(L));
   if(a===12)Q.push(clubScene(L));
   if(a===15&&youthOK(L,'U-18'))Q.push(youthScene(L,'U-18'));
@@ -2044,7 +2133,7 @@ function saveRec(o){try{localStorage.setItem(RKEY,JSON.stringify(o));}catch(e){}
 
 /* ============ 描画 ============ */
 const $=id=>document.getElementById(id);
-function show(id){['s-start','s-profile','s-play','s-end','s-rec'].forEach(s=>{$(s).hidden=s!==id;});if(!HEADLESS)window.scrollTo(0,0);}
+function show(id){const mp=document.getElementById('mpanel');if(mp&&!mp.hidden){mp.hidden=true;document.body.style.overflow='';if(G)G.panel=false;}['s-start','s-profile','s-play','s-end','s-rec'].forEach(s=>{$(s).hidden=s!==id;});if(!HEADLESS)window.scrollTo(0,0);}
 function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
 function statHTML(list){if(!list||!list.length)return '';return '<div class="stats">'+list.map(s=>{const st=Array.isArray(s)?s:STAT[s];if(!st)return '';return `<div class="stat ${st[0]}"><i>${st[0]==='real'?'実データ':'ゲーム上の仮定'}</i><span>${esc(st[1])}</span></div>`;}).join('')+'</div>';}
 
@@ -2164,7 +2253,7 @@ function renderPlay(){
   // お金
   const nw=netWorth(L);
   $('assets').innerHTML=assetsHTML(L)+(L.age>=20&&!G.ended?`<button class="ghost" type="button" id="b-money" style="margin-top:8px"${G.queue.length?' disabled':''}>お金と暮らしを見直す</button>`:'');
-  {const bm=$('b-money');if(bm)bm.onclick=()=>{if(G.queue.length||G.ended)return;G.queue.push(moneyIntro(L,true));renderPlay();};}
+  {const bm=$('b-money');if(bm)bm.onclick=()=>{if(G.queue.length||G.ended)return;openMoney();};}
   $('income').innerHTML=incomeHTML(L);
   // メーター
   $('meters').innerHTML=['h','j','k','r'].map(k=>{const v=Math.round(L.m[k]);return `<div class="meter ${v<30?'low':''}"><span>${MNAME[k]}</span><div class="bar"><i style="width:${v}%"></i></div><span class="v">${v}</span></div>`;}).join('');
@@ -2295,7 +2384,8 @@ function showRec(){
 /* ============ 起動 ============ */
 let timer=null;
 function tick(){
-  if(!G||G.paused)return;
+  if(!G||G.paused||G.panel)return;
+  if(G.openPanel&&!G.queue.length&&!G.ended){G.openPanel=false;openMoney('life');return;}
   if(G.queue.length){
     const s=G.queue[0];
     if(G.auto&&s.kind!=='death'){if(!G.autoAt)G.autoAt=Date.now()+1400;else if(Date.now()>=G.autoAt){G.autoAt=0;choose(autoIndex(s));}}
